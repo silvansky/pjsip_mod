@@ -1,4 +1,4 @@
-/* $Id: vid_stream.c 3955 2012-02-20 03:30:54Z nanang $ */
+/* $Id: vid_stream.c 3975 2012-03-14 12:36:42Z nanang $ */
 /* 
 * Copyright (C) 2011 Teluu Inc. (http://www.teluu.com)
 *
@@ -792,8 +792,7 @@ static void on_rx_rtcp( void *data,
 	pjmedia_rtcp_rx_rtcp(&stream->rtcp, pkt, bytes_read);
 }
 
-static pj_status_t put_frame(pjmedia_port *port,
-														 pjmedia_frame *frame)
+static pj_status_t put_frame(pjmedia_port *port, pjmedia_frame *frame)
 {
 	pjmedia_vid_stream *stream = (pjmedia_vid_stream*) port->port_data.pdata;
 	pjmedia_vid_channel *channel = stream->enc;
@@ -814,10 +813,8 @@ static pj_status_t put_frame(pjmedia_port *port,
 	{
 		pj_uint32_t dtx_duration;
 
-		dtx_duration = pj_timestamp_diff32(&stream->last_frm_ts_sent, 
-			&frame->timestamp);
-		if (dtx_duration >
-			PJMEDIA_STREAM_KA_INTERVAL * channel->port.info.clock_rate)
+		dtx_duration = pj_timestamp_diff32(&stream->last_frm_ts_sent, &frame->timestamp);
+		if (dtx_duration > PJMEDIA_STREAM_KA_INTERVAL * channel->port.info.clock_rate)
 		{
 			send_keep_alive_packet(stream);
 			stream->last_frm_ts_sent = frame->timestamp;
@@ -826,7 +823,8 @@ static pj_status_t put_frame(pjmedia_port *port,
 #endif
 
 	/* Don't do anything if stream is paused */
-	if (channel->paused) {
+	if (channel->paused)
+	{
 		return PJ_SUCCESS;
 	}
 
@@ -839,12 +837,12 @@ static pj_status_t put_frame(pjmedia_port *port,
 
 	/* Init encoding option */
 	pj_bzero(&enc_opt, sizeof(enc_opt));
-	if (stream->force_keyframe) {
+	if (stream->force_keyframe)
+	{
 		/* Force encoder to generate keyframe */
 		enc_opt.force_keyframe = PJ_TRUE;
 		stream->force_keyframe = PJ_FALSE;
-		TRC_((channel->port.info.name.ptr,
-			"Forcing encoder to generate keyframe"));
+		TRC_((channel->port.info.name.ptr, "Forcing encoder to generate keyframe"));
 	}
 
 	/* Encode! */
@@ -859,22 +857,15 @@ static pj_status_t put_frame(pjmedia_port *port,
 		LOGERR_((channel->port.info.name.ptr, "Codec encode_begin() error", status));
 
 		/* Update RTP timestamp */
-		pjmedia_rtp_encode_rtp(&channel->rtp, channel->pt, 1, 0,
-			rtp_ts_len,  (const void**)&rtphdr,
-			&rtphdrlen);
+		pjmedia_rtp_encode_rtp(&channel->rtp, channel->pt, 1, 0, rtp_ts_len, (const void**)&rtphdr, &rtphdrlen);
 		return status;
 	}
 
 	/* Loop while we have frame to send */
 	for (;;)
 	{
-		status = pjmedia_rtp_encode_rtp(&channel->rtp,
-			channel->pt,
-			(has_more_data == PJ_FALSE ? 1 : 0),
-			frame_out.size,
-			rtp_ts_len,
-			(const void**)&rtphdr,
-			&rtphdrlen);
+		status = pjmedia_rtp_encode_rtp(&channel->rtp, channel->pt, (has_more_data == PJ_FALSE ? 1 : 0), frame_out.size, 
+			rtp_ts_len, (const void**)&rtphdr, &rtphdrlen);
 		if (status != PJ_SUCCESS)
 		{
 			LOGERR_((channel->port.info.name.ptr, "RTP encode_rtp() error", status));
@@ -885,16 +876,15 @@ static pj_status_t put_frame(pjmedia_port *port,
 		pj_memcpy(channel->buf, rtphdr, sizeof(pjmedia_rtp_hdr));
 
 		// Send the RTP packet to the transport.
-		status = pjmedia_transport_send_rtp(stream->transport,
-			(char*)channel->buf,
-			frame_out.size +
-			sizeof(pjmedia_rtp_hdr));
+		status = pjmedia_transport_send_rtp(stream->transport, (char*)channel->buf, frame_out.size + sizeof(pjmedia_rtp_hdr));
 		if (status != PJ_SUCCESS)
 		{
 			enum { COUNT_TO_REPORT = 20 };
 			if (stream->send_err_cnt++ == 0)
 			{
 				LOGERR_((channel->port.info.name.ptr, "Transport send_rtp() error", status));
+				//if(!has_more_data)
+					//PJ_LOG(4,(channel->port.info.name.ptr, "MARK not send!"));
 			}
 			if (stream->send_err_cnt > COUNT_TO_REPORT)
 				stream->send_err_cnt = 0;
@@ -1051,9 +1041,12 @@ static pj_status_t decode_frame(pjmedia_vid_stream *stream, pjmedia_frame *frame
 		pjmedia_jbuf_remove_frame(stream->jb, cnt);
 	}
 
+
+
 	/* Learn remote frame rate after successful decoding */
-	if (0 && frame->type == PJMEDIA_FRAME_TYPE_VIDEO && frame->size)
+	if (frame->type == PJMEDIA_FRAME_TYPE_VIDEO && frame->size)
 	{
+
 		/* Only check remote frame rate when timestamp is not wrapping and
 		* sequence is increased by 1.
 		*/
@@ -1066,23 +1059,28 @@ static pj_status_t decode_frame(pjmedia_vid_stream *stream, pjmedia_frame *frame
 			ts_diff = last_ts - stream->last_dec_ts;
 			vfd = pjmedia_format_get_video_format_detail(
 				&channel->port.info.fmt, PJ_TRUE);
-			if ((int)(stream->info.codec_info.clock_rate / ts_diff) !=
-				vfd->fps.num / vfd->fps.denum)
+			if (stream->info.codec_info.clock_rate * vfd->fps.denum !=
+				vfd->fps.num * ts_diff)
 			{
 				/* Frame rate changed, update decoding port info */
-				vfd->fps.num = stream->info.codec_info.clock_rate;
-				vfd->fps.denum = ts_diff;
+				if (stream->info.codec_info.clock_rate % ts_diff == 0) {
+					vfd->fps.num = stream->info.codec_info.clock_rate/ts_diff;
+					vfd->fps.denum = 1;
+				} else {
+					vfd->fps.num = stream->info.codec_info.clock_rate;
+					vfd->fps.denum = ts_diff;
+				}
 
 				/* Update stream info */
 				stream->info.codec_param->dec_fmt.det.vid.fps = vfd->fps;
 
-				PJ_LOG(5, (channel->port.info.name.ptr,
-					"Frame rate changed to %d/%d(~%d)fps",
+				PJ_LOG(6, (channel->port.info.name.ptr,
+					"Frame rate update: %d/%d(~%.2f)fps",
 					vfd->fps.num, vfd->fps.denum,
-					vfd->fps.num / vfd->fps.denum));
+					vfd->fps.num*1.0 / vfd->fps.denum));
 
 				/* Publish PJMEDIA_EVENT_FMT_CHANGED event */
-				{
+				if (0) {
 					pjmedia_event event;
 
 					dump_port_info(stream->dec, "changed");
@@ -1350,7 +1348,7 @@ PJ_DEF(pj_status_t) pjmedia_vid_stream_create(
 	/* Create and initialize codec: */
 	//status = pjmedia_vid_codec_mgr_alloc_codec(stream->codec_mgr, &info->codec_info, &stream->codec);
 	status = pjmedia_vid_codec_mgr_alloc_codecs(stream->codec_mgr, &info->codec_info, &stream->codec_encoder, &stream->codec_decoder);
-	
+
 	if (status != PJ_SUCCESS)
 		return status;
 
@@ -1423,7 +1421,7 @@ PJ_DEF(pj_status_t) pjmedia_vid_stream_create(
 	if (status != PJ_SUCCESS)
 		return status;
 
-		/* Init and open the codec. */
+	/* Init and open the codec. */
 	status = pjmedia_vid_codec_init(stream->codec_decoder, pool);
 	if (status != PJ_SUCCESS)
 		return status;

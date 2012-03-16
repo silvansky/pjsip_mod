@@ -1571,8 +1571,6 @@ static pj_status_t ffmpeg_codec_encode_begin(pjmedia_vid_codec *codec,
 
 	*has_more = PJ_FALSE;
 
-	//return 1; // ÓÁÐÀÒÜ
-
 	if (ff->whole)
 	{
 		status = ffmpeg_codec_encode_whole(codec, opt, input, out_size, output);
@@ -1712,20 +1710,20 @@ static pj_status_t check_decode_result(pjmedia_vid_codec *codec,
 	}
 
 	/* Check for missing/found keyframe */
-	if (got_keyframe)
-	{
-		pj_get_timestamp(&ff->last_dec_keyframe_ts);
+	//////////if (got_keyframe)
+	//////////{
+	//////////	pj_get_timestamp(&ff->last_dec_keyframe_ts);
 
-		/* Broadcast keyframe event */
-		pjmedia_event_init(&event, PJMEDIA_EVENT_KEYFRAME_FOUND, ts, codec);
-		pjmedia_event_publish(NULL, codec, &event, 0);
-	}
-	else if (ff->last_dec_keyframe_ts.u64 == 0)
-	{
-		/* Broadcast missing keyframe event */
-		pjmedia_event_init(&event, PJMEDIA_EVENT_KEYFRAME_MISSING, ts, codec);
-		pjmedia_event_publish(NULL, codec, &event, 0);
-	}
+	//////////	/* Broadcast keyframe event */
+	//////////	pjmedia_event_init(&event, PJMEDIA_EVENT_KEYFRAME_FOUND, ts, codec);
+	//////////	pjmedia_event_publish(NULL, codec, &event, 0);
+	//////////}
+	//////////else if (ff->last_dec_keyframe_ts.u64 == 0)
+	//////////{
+	//////////	/* Broadcast missing keyframe event */
+	//////////	pjmedia_event_init(&event, PJMEDIA_EVENT_KEYFRAME_MISSING, ts, codec);
+	//////////	pjmedia_event_publish(NULL, codec, &event, 0);
+	//////////}
 
 	return PJ_SUCCESS;
 }

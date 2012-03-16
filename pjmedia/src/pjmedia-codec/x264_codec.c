@@ -359,27 +359,33 @@ static pj_status_t h264_preopen(x264_private *x264)
 		}
 
 		/* Limit NAL unit size as we prefer single NAL unit packetization */
-		ctx->i_slice_max_size = 1300;//x264->param.enc_mtu;
+		ctx->i_slice_max_size = x264->param.enc_mtu/2;//1300;//x264->param.enc_mtu;
 		ctx->b_sliced_threads = 0;
 		//param.i_slice_max_size = 1300;
 		ctx->i_bframe = 0;
 		ctx->i_threads = 0;
 		ctx->i_fps_num = x264->desc->fps.num; //15; 
 		ctx->i_fps_den = 1;//x264->desc->fps.denum; //1; 
-		//ctx->i_keyint_max = 12;
 		// Intra refres:
 		ctx->i_keyint_max = ctx->i_fps_num / 2;
+
 		ctx->b_intra_refresh = 1;
 		//Rate control:
 		ctx->rc.i_rc_method = X264_RC_CRF;
-		ctx->rc.f_rf_constant = 25;
-		ctx->rc.f_rf_constant_max = 30;
+		ctx->rc.f_rf_constant = 26;
+		ctx->rc.f_rf_constant_max = 27;
+
+		ctx->b_constrained_intra = 1;
+
+		//ctx->rc.f_ip_factor = 2;
+
+		//ctx->i_scenecut_threshold = 60;
 		//For streaming:
-		//param.b_repeat_headers = 1;
-		//param.b_annexb = 1;
-		//ctx->analyse.b_dct_decimate = 0;
-		//ctx->analyse.b_fast_pskip = 0;
-		//ctx->analyse.i_direct_mv_pred = X264_DIRECT_PRED_SPATIAL;
+		////////param.b_repeat_headers = 1;
+		////////param.b_annexb = 1;
+		////////ctx->analyse.b_dct_decimate = 0;
+		////////ctx->analyse.b_fast_pskip = 0;
+		////////ctx->analyse.i_direct_mv_pred = X264_DIRECT_PRED_SPATIAL;
 
 		ctx->b_repeat_headers = 1; 
 		ctx->b_annexb = 1; 
@@ -923,6 +929,7 @@ static pj_status_t open_x264_codec(x264_private *x264, pj_mutex_t *x264_mutex)
 
 
 		x264_param_default_preset(ctx, "ultrafast", "zerolatency");
+		//x264_param_default_preset(ctx, "superfast", "zerolatency");
 
 		/* Init generic encoder params */
 
@@ -1306,7 +1313,7 @@ static pj_status_t x264_codec_encode_whole(pjmedia_vid_codec *codec,
 		do 
 		{
 			ret = x264_encoder_encode(x264->enc, &nals, &i_nals, &x264->pic_in, &pic_out);
-			if(ret < 0)
+			if(ret <= 0)
 				return PJMEDIA_CODEC_EFAILED;
 			
 			
@@ -1411,6 +1418,7 @@ static pj_status_t x264_codec_encode_begin(pjmedia_vid_codec *codec,
 			output->bit_info |= PJMEDIA_VID_FRM_KEYFRAME;
 
 		*has_more = (x264->enc_processed < x264->enc_frame_len);
+		//*has_more = 0;
 	}
 
 	//pj_mutex_unlock(x264_mutex);
