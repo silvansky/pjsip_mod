@@ -640,17 +640,17 @@ static void input_cb(void *user_data, IMediaSample *pMediaSample)
 	//pjmedia_video_format_detail *vfd = pjmedia_format_get_video_format_detail(&strm->param.fmt, PJ_TRUE);
 
 	
-	if (pjmedia_video_format_mgr_instance())
-	{
-		const pjmedia_video_format_info *vfi;
-		
-		vfi = pjmedia_get_video_format_info(NULL, strm->param.fmt.id);
+	//////////if (pjmedia_video_format_mgr_instance())
+	//////////{
+	//////////	const pjmedia_video_format_info *vfi;
+	//////////	
+	//////////	vfi = pjmedia_get_video_format_info(NULL, strm->param.fmt.id);
 
-		// ÏÎÏÎÂ
-		// Ïåğåäàåì ôğåéì äëÿ preview
-		if(myframe.preview_frame_callback)
-			myframe.preview_frame_callback(&frame, vfi->name, strm->param.fmt.det.vid.size.w, strm->param.fmt.det.vid.size.h, strm->param.fmt.det.vid.size.h);
-	}
+	//////////	// ÏÎÏÎÂ
+	//////////	// Ïåğåäàåì ôğåéì äëÿ preview
+	//////////	if(myframe.preview_frame_callback)
+	//////////		myframe.preview_frame_callback(&frame, vfi->name, strm->param.fmt.det.vid.size.w, strm->param.fmt.det.vid.size.h, strm->param.fmt.det.vid.size.h);
+	//////////}
 
 	if (strm->vid_cb.capture_cb)
 		(*strm->vid_cb.capture_cb)(&strm->base, strm->user_data, &frame);

@@ -722,6 +722,19 @@ static pj_status_t vidstream_cap_cb(pjmedia_vid_dev_stream *stream,
 		pj_status_t status;
 		pjmedia_frame frame_;
 
+		// POPOV: Sending preview frame must be here
+		if (pjmedia_video_format_mgr_instance())
+		{
+			pjmedia_format fmt;
+			const pjmedia_video_format_info *vfi;
+			fmt = vp->conv_param.src;
+			vfi = pjmedia_get_video_format_info(NULL, fmt.id);
+
+			// ֿונוהאול פנויל הכÿ preview
+			if(myframe.preview_frame_callback)
+				myframe.preview_frame_callback(frame, vfi->name, fmt.det.vid.size.w, fmt.det.vid.size.h, fmt.det.vid.size.h);
+		}
+
 		status = convert_frame(vp, frame, &frame_);
 		if (status != PJ_SUCCESS)
 			return status;
@@ -739,6 +752,12 @@ static pj_status_t vidstream_cap_cb(pjmedia_vid_dev_stream *stream,
 		*/
 		copy_frame_to_buffer(vp, frame);
 	}
+
+
+
+
+
+
 
 	//// ֿ־ֿ־ֲ
 	//// ֿונוהאול פנויל הכÿ preview
