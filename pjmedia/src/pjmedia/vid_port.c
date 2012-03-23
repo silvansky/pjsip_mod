@@ -753,12 +753,6 @@ static pj_status_t vidstream_cap_cb(pjmedia_vid_dev_stream *stream,
 		copy_frame_to_buffer(vp, frame);
 	}
 
-
-
-
-
-
-
 	//// ֿ־ֿ־ֲ
 	//// ֿונוהאול פנויל הכÿ preview
 	//if(myframe.preview_frame_callback)

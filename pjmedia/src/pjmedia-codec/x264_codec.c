@@ -253,7 +253,8 @@ static x264_codec_desc codec_desc[] =
 		{
 		{PJMEDIA_FORMAT_H264, PJMEDIA_RTP_PT_H264, {"H264",4},
 		{"Constrained Baseline (level=30, pack=1)", 39}},
-		{720, 480},	{30, 1}, 256000,    512000,
+		{720, 480},	{16, 1}, 256000,    512000,
+		//{640, 480},	{16, 1}, 256000,    512000,
 		&h264_packetize, &h264_unpacketize, &h264_preopen, &h264_postopen,
 		&pjmedia_vid_codec_h264_match_sdp,
 		/* Leading space for better compatibility (strange indeed!) */
@@ -359,7 +360,8 @@ static pj_status_t h264_preopen(x264_private *x264)
 		}
 
 		/* Limit NAL unit size as we prefer single NAL unit packetization */
-		ctx->i_slice_max_size = x264->param.enc_mtu/2;//1300;//x264->param.enc_mtu;
+		//ctx->i_slice_max_size = x264->param.enc_mtu;//1300;//x264->param.enc_mtu;
+		ctx->i_slice_max_size = 1300;
 		ctx->b_sliced_threads = 0;
 		//param.i_slice_max_size = 1300;
 		ctx->i_bframe = 0;
@@ -372,10 +374,15 @@ static pj_status_t h264_preopen(x264_private *x264)
 		ctx->b_intra_refresh = 1;
 		//Rate control:
 		ctx->rc.i_rc_method = X264_RC_CRF;
-		ctx->rc.f_rf_constant = 26;
-		ctx->rc.f_rf_constant_max = 27;
+		ctx->rc.f_rf_constant = 27;
+		ctx->rc.f_rf_constant_max = 35;
 
-		ctx->b_constrained_intra = 1;
+		//ctx->b_constrained_intra = 1;
+
+		//ctx->rc.i_lookahead = 0;
+		//ctx->i_sync_lookahead = 0;
+		//ctx->b_vfr_input = 0;
+		//ctx->rc.b_mb_tree = 0;
 
 		//ctx->rc.f_ip_factor = 2;
 
@@ -1287,14 +1294,10 @@ static pj_status_t x264_codec_encode_whole(pjmedia_vid_codec *codec,
 	}
 
 	/* Force keyframe */
-//////	if (opt && opt->force_keyframe)
-//////	{
-//////#if LIBAVCODEC_VER_AT_LEAST(53,20)
-//////		avframe.pict_type = AV_PICTURE_TYPE_I;
-//////#else
-//////		avframe.pict_type = FF_I_TYPE;
-//////#endif
-//////	}
+	if (opt && opt->force_keyframe)
+	{
+		x264_encoder_intra_refresh(x264->enc);
+	}
 
 	//x264_encoder_encode( x264_t *, x264_nal_t **pp_nal, int *pi_nal, x264_picture_t *pic_in, x264_picture_t *pic_out );
 

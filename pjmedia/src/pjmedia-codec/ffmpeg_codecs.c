@@ -258,7 +258,8 @@ static ffmpeg_codec_desc codec_desc[] =
 	{PJMEDIA_FORMAT_H264, PJMEDIA_RTP_PT_H264, {"H264",4},
 	 {"Constrained Baseline (level=30, pack=1)", 39}},
 	0,
-	{720, 480},	{30, 1},	256000, 512000,
+	{720, 480},	{16, 1},	256000, 512000,
+	//{640, 480},	{16, 1},	256000, 512000,
 	&h264_packetize, &h264_unpacketize, &h264_preopen, &h264_postopen,
 	&pjmedia_vid_codec_h264_match_sdp,
 	/* Leading space for better compatibility (strange indeed!) */
@@ -1710,20 +1711,20 @@ static pj_status_t check_decode_result(pjmedia_vid_codec *codec,
 	}
 
 	/* Check for missing/found keyframe */
-	//////////if (got_keyframe)
-	//////////{
-	//////////	pj_get_timestamp(&ff->last_dec_keyframe_ts);
+	if (got_keyframe)
+	{
+		pj_get_timestamp(&ff->last_dec_keyframe_ts);
 
-	//////////	/* Broadcast keyframe event */
-	//////////	pjmedia_event_init(&event, PJMEDIA_EVENT_KEYFRAME_FOUND, ts, codec);
-	//////////	pjmedia_event_publish(NULL, codec, &event, 0);
-	//////////}
-	//////////else if (ff->last_dec_keyframe_ts.u64 == 0)
-	//////////{
-	//////////	/* Broadcast missing keyframe event */
-	//////////	pjmedia_event_init(&event, PJMEDIA_EVENT_KEYFRAME_MISSING, ts, codec);
-	//////////	pjmedia_event_publish(NULL, codec, &event, 0);
-	//////////}
+		/* Broadcast keyframe event */
+		pjmedia_event_init(&event, PJMEDIA_EVENT_KEYFRAME_FOUND, ts, codec);
+		pjmedia_event_publish(NULL, codec, &event, 0);
+	}
+	else if (ff->last_dec_keyframe_ts.u64 == 0)
+	{
+		/* Broadcast missing keyframe event */
+		pjmedia_event_init(&event, PJMEDIA_EVENT_KEYFRAME_MISSING, ts, codec);
+		pjmedia_event_publish(NULL, codec, &event, 0);
+	}
 
 	return PJ_SUCCESS;
 }
