@@ -1027,7 +1027,7 @@ retry_on_restart:
 
 	/* Spin if write_op has pending operation */
 	for (retry=0; write_op->op != 0 && retry<PENDING_RETRY; ++retry)
-		pj_thread_sleep(0);
+		pj_thread_sleep(5);
 
 	/* Last chance */
 	if (write_op->op) {

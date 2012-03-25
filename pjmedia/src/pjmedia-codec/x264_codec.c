@@ -49,6 +49,7 @@
 #include "x264.h"
 
 
+
 /* Prototypes for x264 codecs factory */
 static pj_status_t x264_test_alloc( pjmedia_vid_codec_factory *factory,    const pjmedia_vid_codec_info *id );
 static pj_status_t x264_default_attr( pjmedia_vid_codec_factory *factory,  const pjmedia_vid_codec_info *info, pjmedia_vid_codec_param *attr );
@@ -364,7 +365,7 @@ static pj_status_t h264_preopen(x264_private *x264)
 		ctx->i_slice_max_size = 1300;
 		ctx->b_sliced_threads = 0;
 		//param.i_slice_max_size = 1300;
-		ctx->i_bframe = 0;
+		ctx->i_bframe = 2;
 		ctx->i_threads = 0;
 		ctx->i_fps_num = x264->desc->fps.num; //15; 
 		ctx->i_fps_den = 1;//x264->desc->fps.denum; //1; 
@@ -374,7 +375,7 @@ static pj_status_t h264_preopen(x264_private *x264)
 		ctx->b_intra_refresh = 1;
 		//Rate control:
 		ctx->rc.i_rc_method = X264_RC_CRF;
-		ctx->rc.f_rf_constant = 27;
+		ctx->rc.f_rf_constant = 29;
 		ctx->rc.f_rf_constant_max = 35;
 
 		//ctx->b_constrained_intra = 1;
@@ -416,6 +417,9 @@ static pj_status_t h264_preopen(x264_private *x264)
 		//pj_mutex_unlock(x264_mutex);
 		//x264_picture_alloc(&pic_in_test, X264_CSP_I420, ctx->i_width, ctx->i_height);
 		//x264_picture_clean(&pic_in_test);
+
+
+		
 		
 	}
 
@@ -434,6 +438,9 @@ static pj_status_t h264_preopen(x264_private *x264)
 		//	ctx->extradata = data->fmtp.sprop_param_sets;
 		//}
 	}
+
+
+
 
 	return PJ_SUCCESS;
 }
@@ -1023,6 +1030,7 @@ static pj_status_t open_x264_codec(x264_private *x264, pj_mutex_t *x264_mutex)
 			goto on_error;
 	}
 
+
 	return PJ_SUCCESS;
 
 on_error:
@@ -1145,9 +1153,15 @@ static pj_status_t x264_codec_close( pjmedia_vid_codec *codec )
 		//av_free(ff->enc_ctx);
 	}
 
+
+
+
 	//x264_free( x264->pic_in.img.plane[0] );
 	//x264_picture_clean( &x264->pic_in );
 	pj_mutex_unlock(x264_mutex);
+
+	//fclose(file);
+	//file = NULL;
 
 	//x264_picture_clean( &x264->pic_in );
 
@@ -1232,6 +1246,9 @@ static pj_status_t  x264_unpacketize(pjmedia_vid_codec *codec,
 
 	return PJ_ENOTSUP;
 }
+
+
+
 
 
 /*
@@ -1332,8 +1349,48 @@ static pj_status_t x264_codec_encode_whole(pjmedia_vid_codec *codec,
 
 			realOutputSize += ret;
 
+
+			//{
+			//	FILE *file = NULL;
+			//	static int mux_buffer_size = 0;
+			//	uint8_t *mux_buffer = NULL;
+			//	int size;
+
+			//	file = fopen ("D:\\outframe.mpeg4", "ab");
+
+			//	for (i = 0; i < i_nals; i++)
+			//	{
+			//		int i_size;
+
+			//		if( mux_buffer_size < nals[i].i_payload * 3/2 + 4 )
+			//		{
+			//				mux_buffer_size = nals[i].i_payload * 2 + 4;
+			//				free( (void*) mux_buffer );
+			//				mux_buffer = (uint8_t*) malloc( mux_buffer_size );
+			//		}
+
+			//		size = size + mux_buffer_size;
+			//		i_size = mux_buffer_size;
+			//		x264_nal_encode(x264->enc, mux_buffer, &nals[i] );
+			//		//write_nal_unit( mux_buffer , i_size ,"D:\\outframe.mpeg4" );
+			//		if(file)
+			//		{
+			//			fwrite( mux_buffer, sizeof( uint8_t ), i_size, file );
+			//		}
+			//	}
+			//	fclose(file);
+			//	file = NULL;
+			//}
+
+
 		}
 		while (x264_encoder_delayed_frames(x264->enc));
+
+
+
+
+
+
 
 		output->size = realOutputSize;
 		output->bit_info = 0;

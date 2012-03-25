@@ -722,25 +722,40 @@ static pj_status_t vidstream_cap_cb(pjmedia_vid_dev_stream *stream,
 		pj_status_t status;
 		pjmedia_frame frame_;
 
-		// POPOV: Sending preview frame must be here
-		if (pjmedia_video_format_mgr_instance())
-		{
-			pjmedia_format fmt;
-			const pjmedia_video_format_info *vfi;
-			fmt = vp->conv_param.src;
-			vfi = pjmedia_get_video_format_info(NULL, fmt.id);
-
-			// ֿונוהאול פנויל הכÿ preview
-			if(myframe.preview_frame_callback)
-				myframe.preview_frame_callback(frame, vfi->name, fmt.det.vid.size.w, fmt.det.vid.size.h, fmt.det.vid.size.h);
-		}
-
 		status = convert_frame(vp, frame, &frame_);
 		if (status != PJ_SUCCESS)
 			return status;
 
+		// POPOV: Sending preview frame must be here
+		if (pjmedia_video_format_mgr_instance())
+		{
+			pjmedia_format fmt, fmtDst;
+			const pjmedia_video_format_info *vfi, *vfiDst;
+
+			if(vp->conv)
+			{
+				fmtDst = vp->conv_param.dst;
+				vfiDst = pjmedia_get_video_format_info(NULL, fmtDst.id);
+				frame_.type = frame->type;
+			}
+			else
+			{
+				fmt = vp->conv_param.src;
+				vfi = pjmedia_get_video_format_info(NULL, fmt.id);
+			}
+			
+			// ֿונוהאול פנויל הכÿ preview
+			if(myframe.preview_frame_callback)
+			{
+				if(vp->conv)
+					myframe.preview_frame_callback(&frame_, vfiDst->name, fmtDst.det.vid.size.w, fmtDst.det.vid.size.h, fmtDst.det.vid.size.w );
+				else
+					myframe.preview_frame_callback(frame, vfi->name, fmt.det.vid.size.w, fmt.det.vid.size.h, fmt.det.vid.size.h);
+			}
+		}
+
 		if (vp->client_port)
-			status = pjmedia_port_put_frame(vp->client_port,  (vp->conv? &frame_ : frame));
+			status = pjmedia_port_put_frame(vp->client_port,  (vp->conv ? &frame_ : frame));
 		if (status != PJ_SUCCESS)
 			return status;
 	}

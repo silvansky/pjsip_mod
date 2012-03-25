@@ -880,11 +880,11 @@ static pj_status_t put_frame(pjmedia_port *port, pjmedia_frame *frame)
 		if (status != PJ_SUCCESS)
 		{
 			enum { COUNT_TO_REPORT = 20 };
-			if (stream->send_err_cnt++ == 0)
+			//if (stream->send_err_cnt++ == 0)
 			{
 				LOGERR_((channel->port.info.name.ptr, "Transport send_rtp() error", status));
 				//if(!has_more_data)
-					//PJ_LOG(4,(channel->port.info.name.ptr, "MARK not send!"));
+					PJ_LOG(4,(channel->port.info.name.ptr, "SEQ %d not send!", stream->enc->rtp.out_hdr.seq));
 			}
 			if (stream->send_err_cnt > COUNT_TO_REPORT)
 				stream->send_err_cnt = 0;
