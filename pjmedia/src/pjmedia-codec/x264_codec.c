@@ -254,7 +254,8 @@ static x264_codec_desc codec_desc[] =
 		{
 		{PJMEDIA_FORMAT_H264, PJMEDIA_RTP_PT_H264, {"H264",4},
 		{"Constrained Baseline (level=30, pack=1)", 39}},
-		{720, 480},	{16, 1}, 256000,    512000,
+		//{720, 480},	{16, 1}, 256000,    512000,
+		{352, 288},	{16, 1}, 256000,    512000,
 		//{640, 480},	{16, 1}, 256000,    512000,
 		&h264_packetize, &h264_unpacketize, &h264_preopen, &h264_postopen,
 		&pjmedia_vid_codec_h264_match_sdp,
@@ -320,7 +321,12 @@ static pj_status_t h264_preopen(x264_private *x264)
 	/* Apply SDP fmtp to format in codec param */
 	if (!x264->param.ignore_fmtp)
 	{
+		x264->param.dir &= ~PJMEDIA_DIR_DECODING;
+
 		status = pjmedia_vid_codec_h264_apply_fmtp(&x264->param);
+
+		x264->param.dir |= PJMEDIA_DIR_DECODING;
+
 		if (status != PJ_SUCCESS)
 			return status;
 	}
@@ -365,7 +371,7 @@ static pj_status_t h264_preopen(x264_private *x264)
 		ctx->i_slice_max_size = 1300;
 		ctx->b_sliced_threads = 0;
 		//param.i_slice_max_size = 1300;
-		ctx->i_bframe = 2;
+		ctx->i_bframe = 0;
 		ctx->i_threads = 0;
 		ctx->i_fps_num = x264->desc->fps.num; //15; 
 		ctx->i_fps_den = 1;//x264->desc->fps.denum; //1; 
