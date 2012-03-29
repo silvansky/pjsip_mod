@@ -38,19 +38,26 @@
 //
 // These configure SIP registration
 //
-#define USE_REGISTRATION	0
-#define SIP_DOMAIN		"pjsip.org"
-#define SIP_USERNAME		"vidgui"
-#define SIP_PASSWORD		"secret"
-#define SIP_PORT		5080
-#define SIP_TCP			1
+#define TEST_USER1 1
+
+#define USE_REGISTRATION 1
+#define SIP_DOMAIN  "vsip.rambler.ru"
+#define SIP_USER_DOMAIN  "rambler.ru"
+#if TEST_USER1
+# define SIP_USERNAME  "rvoip-1"
+#else
+# define SIP_USERNAME  "rvoip-2"
+#endif
+#define SIP_PASSWORD  "a111111"
+#define SIP_PORT  5080
+#define SIP_TCP   0
 
 //
 // NAT helper settings
 //
-#define USE_ICE			1
-#define USE_STUN		0
-#define STUN_SRV		"stun.pjsip.org"
+#define USE_ICE   0
+#define USE_STUN  0
+#define STUN_SRV  "stun.pjsip.org"
 
 //
 // Devices settings
@@ -68,8 +75,8 @@
 MainWin *MainWin::theInstance_;
 
 MainWin::MainWin(QWidget *parent)
-: QWidget(parent), accountId_(-1), currentCall_(-1),
-preview_on(false), video_(NULL), video_prev_(NULL)
+	: QWidget(parent), accountId_(-1), currentCall_(-1),
+	  preview_on(false), video_(NULL), video_prev_(NULL)
 {
 	theInstance_ = this;
 
@@ -302,7 +309,7 @@ void MainWin::call()
 		call_setting.vid_cnt = (vidEnabled_->checkState()==Qt::Checked);
 
 		status = pjsua_call_make_call(accountId_, &uri2, &call_setting,
-			NULL, NULL, &currentCall_);
+					      NULL, NULL, &currentCall_);
 		if (status != PJ_SUCCESS) {
 			showError("make call", status);
 			return;
@@ -333,7 +340,7 @@ void MainWin::initVideoWindow()
 	pjsua_call_get_info(currentCall_, &ci);
 	for (i = 0; i < ci.media_cnt; ++i) {
 		if ((ci.media[i].type == PJMEDIA_TYPE_VIDEO) &&
-			(ci.media[i].dir & PJMEDIA_DIR_DECODING))
+				(ci.media[i].dir & PJMEDIA_DIR_DECODING))
 		{
 			pjsua_vid_win_info wi;
 			pjsua_vid_win_get_info(ci.media[i].stream.vid.win_in, &wi);
@@ -357,23 +364,23 @@ void MainWin::on_reg_state(pjsua_acc_id acc_id)
 
 	if (!info.has_registration) {
 		pj_ansi_snprintf(reg_status, sizeof(reg_status), "%.*s",
-			(int)info.status_text.slen,
-			info.status_text.ptr);
+				 (int)info.status_text.slen,
+				 info.status_text.ptr);
 
 	} else {
 		pj_ansi_snprintf(reg_status, sizeof(reg_status),
-			"%d/%.*s (expires=%d)",
-			info.status,
-			(int)info.status_text.slen,
-			info.status_text.ptr,
-			info.expires);
+				 "%d/%.*s (expires=%d)",
+				 info.status,
+				 (int)info.status_text.slen,
+				 info.status_text.ptr,
+				 info.expires);
 
 	}
 
 	snprintf(status, sizeof(status),
-		"%.*s: %s\n",
-		(int)info.acc_uri.slen, info.acc_uri.ptr,
-		reg_status);
+		 "%.*s: %s\n",
+		 (int)info.acc_uri.slen, info.acc_uri.ptr,
+		 reg_status);
 	showStatus(status);
 }
 
@@ -394,8 +401,8 @@ void MainWin::on_call_state(pjsua_call_id call_id, pjsip_event *e)
 	if (ci.state == PJSIP_INV_STATE_DISCONNECTED)
 	{
 		snprintf(status, sizeof(status), "Call is %s (%s)",
-			ci.state_text.ptr,
-			ci.last_status_text.ptr);
+			 ci.state_text.ptr,
+			 ci.last_status_text.ptr);
 		showStatus(status);
 		emit signalCallReleased();
 	}
@@ -407,7 +414,7 @@ void MainWin::on_call_state(pjsua_call_id call_id, pjsip_event *e)
 }
 
 void MainWin::on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
-															 pjsip_rx_data *rdata)
+			       pjsip_rx_data *rdata)
 {
 	PJ_UNUSED_ARG(acc_id);
 	PJ_UNUSED_ARG(rdata);
@@ -469,7 +476,7 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e)
 }
 
 static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
-														 pjsip_rx_data *rdata)
+			     pjsip_rx_data *rdata)
 {
 	MainWin::instance()->on_incoming_call(acc_id, call_id, rdata);
 }
@@ -507,7 +514,10 @@ bool MainWin::initStack()
 	ua_cfg.stun_srv_cnt = 1;
 	ua_cfg.stun_srv[0] = pj_str((char*)STUN_SRV);
 #endif
-
+	ua_cfg.outbound_proxy_cnt = 1;
+	char proxyTmp[512];
+	pj_ansi_snprintf(proxyTmp, sizeof(proxyTmp), "sip:%s", SIP_DOMAIN);
+	ua_cfg.outbound_proxy[0] = pj_str((char*)proxyTmp);
 	pjsua_logging_config log_cfg;
 	pjsua_logging_config_default(&log_cfg);
 	log_cfg.log_filename = pj_str((char*)LOG_FILE);
@@ -531,7 +541,7 @@ bool MainWin::initStack()
 	udp_cfg.port = SIP_PORT;
 
 	status = pjsua_transport_create(PJSIP_TRANSPORT_UDP,
-		&udp_cfg, &udp_id);
+					&udp_cfg, &udp_id);
 	if (status != PJ_SUCCESS) {
 		showError("UDP transport creation", status);
 		goto on_error;
@@ -550,7 +560,7 @@ bool MainWin::initStack()
 	tcp_cfg.port = 0;
 
 	status = pjsua_transport_create(PJSIP_TRANSPORT_TCP,
-		&tcp_cfg, NULL);
+					&tcp_cfg, NULL);
 	if (status != PJ_SUCCESS) {
 		showError("TCP transport creation", status);
 		goto on_error;
@@ -563,7 +573,7 @@ bool MainWin::initStack()
 	pjsua_acc_config acc_cfg;
 	pjsua_acc_config_default(&acc_cfg);
 #if USE_REGISTRATION
-	acc_cfg.id = pj_str( (char*)"<sip:" SIP_USERNAME "@" SIP_DOMAIN ">");
+	acc_cfg.id = pj_str( (char*)"<sip:" SIP_USERNAME "@" SIP_USER_DOMAIN ">");
 	acc_cfg.reg_uri = pj_str((char*) ("sip:" SIP_DOMAIN));
 	acc_cfg.cred_count = 1;
 	acc_cfg.cred_info[0].realm = pj_str((char*)"*");
@@ -578,10 +588,10 @@ bool MainWin::initStack()
 #else
 	char sip_id[80];
 	snprintf(sip_id, sizeof(sip_id),
-		"sip:%s@%.*s:%u", SIP_USERNAME,
-		(int)udp_info.local_name.host.slen,
-		udp_info.local_name.host.ptr,
-		udp_info.local_name.port);
+		 "sip:%s@%.*s:%u", SIP_USERNAME,
+		 (int)udp_info.local_name.host.slen,
+		 udp_info.local_name.host.ptr,
+		 udp_info.local_name.port);
 	acc_cfg.id = pj_str(sip_id);
 #endif
 
@@ -630,12 +640,12 @@ static void simple_registrar(pjsip_rx_data *rdata)
 	pj_status_t status;
 
 	status = pjsip_endpt_create_response(pjsua_get_pjsip_endpt(),
-		rdata, 200, NULL, &tdata);
+					     rdata, 200, NULL, &tdata);
 	if (status != PJ_SUCCESS)
 		return;
 
 	exp = (pjsip_expires_hdr*)
-		pjsip_msg_find_hdr(rdata->msg_info.msg, PJSIP_H_EXPIRES, NULL);
+			pjsip_msg_find_hdr(rdata->msg_info.msg, PJSIP_H_EXPIRES, NULL);
 
 	h = rdata->msg_info.msg->hdr.next;
 	while (h != &rdata->msg_info.msg->hdr) {
@@ -652,7 +662,7 @@ static void simple_registrar(pjsip_rx_data *rdata)
 
 			if (e > 0) {
 				pjsip_contact_hdr *nc = (pjsip_contact_hdr*)
-					pjsip_hdr_clone(tdata->pool, h);
+						pjsip_hdr_clone(tdata->pool, h);
 				nc->expires = e;
 				pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*)nc);
 				++cnt;
@@ -667,7 +677,7 @@ static void simple_registrar(pjsip_rx_data *rdata)
 	pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*)srv);
 
 	pjsip_endpt_send_response2(pjsua_get_pjsip_endpt(),
-		rdata, tdata, NULL, NULL);
+				   rdata, tdata, NULL, NULL);
 }
 
 /* Notification on incoming request */
@@ -675,7 +685,7 @@ static pj_bool_t default_mod_on_rx_request(pjsip_rx_data *rdata)
 {
 	/* Simple registrar */
 	if (pjsip_method_cmp(&rdata->msg_info.msg->line.req.method,
-		&pjsip_register_method) == 0)
+			     &pjsip_register_method) == 0)
 	{
 		simple_registrar(rdata);
 		return PJ_TRUE;
@@ -734,7 +744,7 @@ int main(int argc, char *argv[])
 	/* We want to be registrar too! */
 	if (pjsua_get_pjsip_endpt()) {
 		pjsip_endpt_register_module(pjsua_get_pjsip_endpt(),
-			&mod_default_handler);
+					    &mod_default_handler);
 	}
 
 	return app.exec();
