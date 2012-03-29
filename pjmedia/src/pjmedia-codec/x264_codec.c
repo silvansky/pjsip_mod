@@ -381,8 +381,8 @@ static pj_status_t h264_preopen(x264_private *x264)
 		ctx->b_intra_refresh = 1;
 		//Rate control:
 		ctx->rc.i_rc_method = X264_RC_CRF;
-		ctx->rc.f_rf_constant = 29;
-		ctx->rc.f_rf_constant_max = 35;
+		ctx->rc.f_rf_constant = 25;//29;
+		ctx->rc.f_rf_constant_max = 30;//35;
 
 		//ctx->b_constrained_intra = 1;
 
@@ -958,6 +958,9 @@ static pj_status_t open_x264_codec(x264_private *x264, pj_mutex_t *x264_mutex)
 		ctx->i_height = vfd->size.h;
 		ctx->i_timebase_num = vfd->fps.denum;
 		ctx->i_timebase_den = vfd->fps.num;
+
+		x264->param.ignore_fmtp = PJ_TRUE;
+
 		//if (vfd->avg_bps)
 		//{
 		//	ctx->bit_rate = vfd->avg_bps;

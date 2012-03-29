@@ -853,13 +853,13 @@ static pj_status_t put_frame(void *data)
 
 
 	// POPOV: SDL not needed as is
-	//if (stream->scr_tex) {
-	//	SDL_UpdateTexture(stream->scr_tex, NULL, frame->buf, stream->pitch);
-	//	SDL_RenderClear(stream->renderer);
-	//	SDL_RenderCopy(stream->renderer, stream->scr_tex,
-	//		&stream->rect, &stream->dstrect);
-	//	SDL_RenderPresent(stream->renderer);
-	//}
+	if (stream->scr_tex) {
+		SDL_UpdateTexture(stream->scr_tex, NULL, frame->buf, stream->pitch);
+		SDL_RenderClear(stream->renderer);
+		SDL_RenderCopy(stream->renderer, stream->scr_tex,
+			&stream->rect, &stream->dstrect);
+		SDL_RenderPresent(stream->renderer);
+	}
 #if PJMEDIA_VIDEO_DEV_SDL_HAS_OPENGL
 	//else if (stream->param.rend_id == OPENGL_DEV_IDX && stream->texture) {
 	//	glBindTexture(GL_TEXTURE_2D, stream->texture);

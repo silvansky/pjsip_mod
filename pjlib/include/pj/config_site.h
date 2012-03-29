@@ -39,8 +39,8 @@
 #   define PJMEDIA_HAS_G722_CODEC    0
 #   define PJMEDIA_HAS_L16_CODEC    0
 
-#   define PJMEDIA_HAS_SPEEX_CODEC    0
-//#   define PJMEDIA_HAS_GSM_CODEC    1
+#   define PJMEDIA_HAS_SPEEX_CODEC    1
+#   define PJMEDIA_HAS_GSM_CODEC    0
 
 #   define PJSIP_ENCODE_SHORT_HNAME 1
 
