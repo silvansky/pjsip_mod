@@ -2894,7 +2894,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\pjmedia-videodev\sdl_dev.c"
+				RelativePath="..\src\pjmedia-videodev\callback_dev.c"
 				>
 			</File>
 			<File
