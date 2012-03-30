@@ -83,6 +83,11 @@ pjmedia_vid_dev_factory* pjmedia_cbar_factory(pj_pool_factory *pf);
 pjmedia_vid_dev_factory* pjmedia_sdl_factory(pj_pool_factory *pf);
 #endif
 
+#if PJMEDIA_VIDEO_DEV_HAS_CALLBACK
+pjmedia_vid_dev_factory* pjmedia_callback_factory(pj_pool_factory *pf);
+#endif
+
+
 #if PJMEDIA_VIDEO_DEV_HAS_FFMPEG
 pjmedia_vid_dev_factory* pjmedia_ffmpeg_factory(pj_pool_factory *pf);
 #endif
@@ -394,6 +399,10 @@ PJ_DEF(pj_status_t) pjmedia_vid_dev_subsys_init(pj_pool_factory *pf)
 #if PJMEDIA_VIDEO_DEV_HAS_SDL
 	vid_subsys.drv[vid_subsys.drv_cnt++].create = &pjmedia_sdl_factory;
 #endif
+#if PJMEDIA_VIDEO_DEV_HAS_CALLBACK
+	vid_subsys.drv[vid_subsys.drv_cnt++].create = &pjmedia_callback_factory;
+#endif
+
 
 	/* Initialize each factory and build the device ID list */
 	for (i=0; i<vid_subsys.drv_cnt; ++i) {
