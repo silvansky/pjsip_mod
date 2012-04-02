@@ -292,7 +292,11 @@ PJ_DEF(pj_status_t) pjmedia_vid_codec_mgr_enum_codecs(
 	pjmedia_vid_codec_info codecs[],
 	unsigned *prio)
 {
+	pj_bool_t alreadyHas = PJ_FALSE;
 	unsigned i;
+	unsigned j_test;
+	unsigned k_codec_num = 0;
+	unsigned p_num = 0;
 
 	PJ_ASSERT_RETURN(count && codecs, PJ_EINVAL);
 
@@ -302,12 +306,34 @@ PJ_DEF(pj_status_t) pjmedia_vid_codec_mgr_enum_codecs(
 	pj_mutex_lock(mgr->mutex);
 
 	if (*count > mgr->codec_cnt)
+	{
 		*count = mgr->codec_cnt;
+	}
 
-	for (i=0; i<*count; ++i) {
-		pj_memcpy(&codecs[i], 
+	k_codec_num = *count;
+
+	//for (i=0; i<*count; ++i)
+	for (i=0; i<k_codec_num; ++i)
+	{
+		alreadyHas = PJ_FALSE;
+		for(j_test=0; j_test<i; j_test++)
+		{
+			if(codecs[j_test].fmt_id	== mgr->codec_desc[i].info.fmt_id)
+			{
+				*count = *count - 1;
+				alreadyHas = PJ_TRUE;
+				break;
+			}
+		}
+		if(alreadyHas)
+			continue;
+
+		pj_memcpy(&codecs[p_num++], 
 			&mgr->codec_desc[i].info, 
 			sizeof(pjmedia_vid_codec_info));
+		//pj_memcpy(&codecs[i], 
+		//	&mgr->codec_desc[i].info, 
+		//	sizeof(pjmedia_vid_codec_info));
 	}
 
 	if (prio) {
