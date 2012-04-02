@@ -655,8 +655,8 @@ static pj_status_t callback_factory_init(pjmedia_vid_dev_factory *f)
 	unsigned i, j;
 	pj_status_t status;
 	//CALLBACK_version version;
-	uint ver_major = 0;
-	uint ver_minor = 1;
+	pj_uint32_t ver_major = 0;
+	pj_uint32_t ver_minor = 1;
 
 
 	status = job_queue_create(sf->pool, &sf->jq);

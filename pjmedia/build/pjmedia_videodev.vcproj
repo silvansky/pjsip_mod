@@ -2874,6 +2874,10 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
+				RelativePath="..\src\pjmedia-videodev\callback_dev.c"
+				>
+			</File>
+			<File
 				RelativePath="..\src\pjmedia-videodev\colorbar_dev.c"
 				>
 			</File>
@@ -2894,7 +2898,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\pjmedia-videodev\callback_dev.c"
+				RelativePath="..\src\pjmedia-videodev\sdl_dev.c"
 				>
 			</File>
 			<File
