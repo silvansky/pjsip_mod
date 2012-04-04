@@ -255,7 +255,7 @@ static x264_codec_desc codec_desc[] =
 		{PJMEDIA_FORMAT_H264, PJMEDIA_RTP_PT_H264, {"H264",4},
 		{"Constrained Baseline (level=30, pack=1)", 39}},
 		//{720, 480},	{16, 1}, 256000,    512000,
-		{352, 288},	{16, 1}, 256000,    512000,
+		{352, 288},	{30, 1}, 256000,    512000,
 		//{640, 480},	{16, 1}, 256000,    512000,
 		&h264_packetize, &h264_unpacketize, &h264_preopen, &h264_postopen,
 		&pjmedia_vid_codec_h264_match_sdp,
@@ -381,8 +381,10 @@ static pj_status_t h264_preopen(x264_private *x264)
 		ctx->b_intra_refresh = 1;
 		//Rate control:
 		ctx->rc.i_rc_method = X264_RC_CRF;
-		ctx->rc.f_rf_constant = 25;//29;
-		ctx->rc.f_rf_constant_max = 30;//35;
+		//ctx->rc.f_rf_constant = 25;//29;
+		//ctx->rc.f_rf_constant_max = 30;//35;
+		ctx->rc.f_rf_constant = 27;
+		ctx->rc.f_rf_constant_max = 32;
 
 		//ctx->b_constrained_intra = 1;
 

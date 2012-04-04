@@ -76,6 +76,9 @@ struct pjmedia_vid_port
 	pjmedia_frame           *frm_buf;
 	pj_size_t                frm_buf_size;
 	pj_mutex_t              *frm_mutex;
+
+	// Popov: call_id was integrated to pjmedia_vid_port. It is possible now to get right call object in callback in put_frame() of callback_dev
+	int call_id;
 };
 
 struct vid_pasv_port
@@ -202,6 +205,8 @@ PJ_DEF(pj_status_t) pjmedia_vid_port_create( pj_pool_t *pool,
 	vp->role = prm->active ? ROLE_ACTIVE : ROLE_PASSIVE;
 	vp->dir = prm->vidparam.dir;
 	//    vp->cap_size = vfd->size;
+
+	vp->call_id = -1;
 
 	vparam = prm->vidparam;
 	dev_name[0] = '\0';
@@ -989,6 +994,19 @@ static pj_status_t vid_pasv_port_get_frame(struct pjmedia_port *this_port,
 	}
 
 	return status;
+}
+
+PJ_DECL(void) pjmedia_vid_port_set_call_id(pjmedia_vid_port *vid_port, int call_id)
+{
+	if(vid_port)
+		vid_port->call_id = call_id;
+}
+
+PJ_DECL(int) pjmedia_vid_port_get_call_id(pjmedia_vid_port *vid_port)
+{
+	if(!vid_port)
+		return -1;
+	return vid_port->call_id;
 }
 
 

@@ -467,7 +467,7 @@ typedef pjmedia_vid_dev_factory*
 typedef struct pjmedia_vid_dev_myframe
 {
 	// ПОПОВ. callback ф-ия передающая кадр
-	pj_status_t (*put_frame_callback)(pjmedia_frame *frame, int w, int h, int stride);
+	pj_status_t (*put_frame_callback)(int call_id, pjmedia_frame *frame, int w, int h, int stride);
 	pj_status_t (*preview_frame_callback)(pjmedia_frame *frame, const char* colormodelName, int w, int h, int stride);
 } pjmedia_vid_dev_myframe;
 

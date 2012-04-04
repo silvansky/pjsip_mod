@@ -916,9 +916,14 @@ static pj_status_t put_frame(void *data)
 {
 	struct callback_stream *stream = (struct callback_stream *)data;
 
+	struct pjmedia_vid_port *vp = (struct pjmedia_vid_port *)stream->user_data;
+
+	int call_id = pjmedia_vid_port_get_call_id(vp);
+
+
 	// working with callback functions in myframe
 	if(myframe.put_frame_callback)
-		myframe.put_frame_callback(stream->frame, stream->rect.w, stream->rect.h, stream->pitch);
+		myframe.put_frame_callback(call_id, stream->frame, stream->rect.w, stream->rect.h, stream->pitch);
 
 	return PJ_SUCCESS;
 }

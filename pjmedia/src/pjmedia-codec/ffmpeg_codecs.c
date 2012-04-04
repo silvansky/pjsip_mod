@@ -259,7 +259,7 @@ static ffmpeg_codec_desc codec_desc[] =
 	 {"Constrained Baseline (level=30, pack=1)", 39}},
 	0,
 	//{720, 480},	{16, 1},	256000, 512000,
-	{352, 288},	{16, 1}, 256000,    512000,
+	{352, 288},	{30, 1}, 256000,    512000,
 	//{640, 480},	{16, 1},	256000, 512000,
 	&h264_packetize, &h264_unpacketize, &h264_preopen, &h264_postopen,
 	&pjmedia_vid_codec_h264_match_sdp,

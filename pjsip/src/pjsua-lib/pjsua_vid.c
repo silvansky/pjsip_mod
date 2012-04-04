@@ -846,10 +846,14 @@ pj_status_t video_channel_update(pjsua_call_media *call_med,
 
 			w = &pjsua_var.win[wid];
 
+			pjmedia_vid_port_set_call_id(w->vp_rend, call_med->call->index);
+			//w->vp_rend->call_id = call_med->call->index;
+
 #if ENABLE_EVENT
 			/* Register to video events */
 			pjmedia_event_subscribe(NULL, &call_media_on_event, call_med, w->vp_rend);
 #endif
+
 
 			/* Connect renderer to stream */
 			status = pjmedia_vid_port_connect(w->vp_rend, media_port, PJ_FALSE);
