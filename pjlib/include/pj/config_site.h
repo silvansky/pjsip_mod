@@ -33,7 +33,7 @@
 
 #define PJMEDIA_MAX_MTU						1400
 
-#if defined(PJ_WIN32_WINCE) && PJ_WIN32_WINCE!=0
+#if defined(PJ_WIN32) && PJ_WIN32!=0
 # define PJMEDIA_VIDEO_DEV_HAS_DSHOW		1
 # define PJMEDIA_VIDEO_DEV_HAS_QT			0
 #endif // PJ_WIN32_WINCE
