@@ -1,4 +1,4 @@
-/* $Id: pjsua.h 3938 2012-01-09 11:51:56Z ming $ */
+/* $Id: pjsua.h 4054 2012-04-16 07:50:01Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -34,6 +34,9 @@
 
 /* Include all PJMEDIA-CODEC headers. */
 #include <pjmedia-codec.h>
+
+/* Videodev too */
+#include <pjmedia_videodev.h>
 
 /* Include all PJSIP-UA headers */
 #include <pjsip_ua.h>
@@ -1628,7 +1631,7 @@ struct pjsua_msg_data
      * Additional message headers as linked list. Application can add
      * headers to the list by creating the header, either from the heap/pool
      * or from temporary local variable, and add the header using
-     * linked list operation. See pjsip_apps.c for some sample codes.
+     * linked list operation. See pjsua_app.c for some sample codes.
      */
     pjsip_hdr	hdr_list;
 
@@ -2877,6 +2880,13 @@ typedef struct pjsua_acc_config
      * Default: PJMEDIA_VID_DEFAULT_RENDER_DEV
      */
     pjmedia_vid_dev_index vid_rend_dev;
+
+    /**
+     * Specify the send rate control for video stream.
+     *
+     * Default: see #pjmedia_vid_stream_rc_config
+     */
+    pjmedia_vid_stream_rc_config vid_stream_rc_cfg;
 
     /**
      * Media transport config.
@@ -4886,7 +4896,7 @@ PJ_DECL(pj_status_t) pjsua_im_typing(pjsua_acc_id acc_id,
   {
      pjsua_player_id player_id;
      
-     status = pjsua_player_create("mysong.wav", 0, NULL, &player_id);
+     status = pjsua_player_create("mysong.wav", 0, &player_id);
      if (status != PJ_SUCCESS)
         return status;
 
@@ -4912,6 +4922,15 @@ PJ_DECL(pj_status_t) pjsua_im_typing(pjsua_acc_id acc_id,
  *  - correctly report call's media quality (in #pjsua_call_dump()) from
  *    RTCP packet exchange.
  */
+
+/**
+ * Use PJMEDIA for media? Set this to zero when using third party media
+ * stack.
+ */
+#ifndef PJSUA_MEDIA_HAS_PJMEDIA
+#  define PJSUA_MEDIA_HAS_PJMEDIA	1
+#endif	/* PJSUA_MEDIA_HAS_PJMEDIA */
+
 
 /**
  * Max ports in the conference bridge. This setting is the default value
