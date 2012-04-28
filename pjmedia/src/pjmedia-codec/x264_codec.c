@@ -1,4 +1,4 @@
-/* $Id: x264_codec.c 1000 2012-02-20 04:20:47Z popov $ */
+/* $Id: x264_codec.c 1010 2012-04-12 20:40:47Z popov $ */
 /* 
 * Copyright (C) 2010-2011 Teluu Inc. (http://www.teluu.com)
 *
@@ -560,8 +560,8 @@ PJ_DEF(pj_status_t) pjmedia_codec_x264_init(pjmedia_vid_codec_mgr *mgr, pj_pool_
 	desc->info.dec_fmt_id_cnt = 3;
 
 	desc->info.dec_fmt_id[0] = PJMEDIA_FORMAT_I420;
-	desc->info.dec_fmt_id[0] = PJMEDIA_FORMAT_I420JPEG;
-	desc->info.dec_fmt_id[0] = PJMEDIA_FORMAT_YV12;
+	desc->info.dec_fmt_id[1] = PJMEDIA_FORMAT_I420JPEG;
+	desc->info.dec_fmt_id[2] = PJMEDIA_FORMAT_YV12;
 
   desc->info.fps_cnt = 0;
 
@@ -777,7 +777,8 @@ static pj_status_t x264_default_attr( pjmedia_vid_codec_factory *factory, const 
 
 	/* Encoded format */
 	//pjmedia_format_init_video(&attr->enc_fmt, desc->info.fmt_id, 720, 480, 30000, 1001);
-	pjmedia_format_init_video(&attr->enc_fmt, desc->info.fmt_id, desc->size.w, desc->size.h, desc->fps.num, desc->fps.denum);
+	//pjmedia_format_init_video(&attr->enc_fmt, desc->info.fmt_id, desc->size.w, desc->size.h, desc->fps.num, desc->fps.denum);
+	pjmedia_format_init_video(&attr->enc_fmt, desc->info.dec_fmt_id[0], desc->size.w, desc->size.h, desc->fps.num, desc->fps.denum);
 
 	/* Decoded format */
 	//pjmedia_format_init_video(&attr->dec_fmt, desc->info.dec_fmt_id[0],
@@ -794,8 +795,8 @@ static pj_status_t x264_default_attr( pjmedia_vid_codec_factory *factory, const 
 	attr->enc_fmt.det.vid.avg_bps = desc->avg_bps;
 	attr->enc_fmt.det.vid.max_bps = desc->max_bps;
 
-	/* MTU */
-	attr->enc_mtu = PJMEDIA_MAX_MTU;
+	/* Encoding MTU */
+	attr->enc_mtu = PJMEDIA_MAX_VID_PAYLOAD_SIZE;
 
 	return PJ_SUCCESS;
 }
@@ -1077,6 +1078,10 @@ static pj_status_t x264_codec_open( pjmedia_vid_codec *codec, pjmedia_vid_codec_
 
 	pj_memcpy(&x264->param, attr, sizeof(*attr));
 
+	/* Normalize encoding MTU in codec param */
+	if (attr->enc_mtu > PJMEDIA_MAX_VID_PAYLOAD_SIZE)
+		attr->enc_mtu = PJMEDIA_MAX_VID_PAYLOAD_SIZE;
+
 	/* Open the codec */
 	x264_mutex = ((struct x264_factory*)codec->factory)->mutex;
 	status = open_x264_codec(x264, x264_mutex);
@@ -1100,7 +1105,8 @@ static pj_status_t x264_codec_open( pjmedia_vid_codec *codec, pjmedia_vid_codec_
 	//////////}
 
 	/* Init format info and apply-param of encoder */
-	x264->enc_vfi = pjmedia_get_video_format_info(NULL, x264->param.dec_fmt.id);
+	//x264->enc_vfi = pjmedia_get_video_format_info(NULL, x264->param.dec_fmt.id);
+  x264->enc_vfi = pjmedia_get_video_format_info(NULL, x264->param.enc_fmt.id);
 	if (!x264->enc_vfi)
 	{
 		status = PJ_EINVAL;
