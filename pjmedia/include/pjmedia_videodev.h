@@ -1,4 +1,4 @@
-/* $Id: pjmedia_videodev.h 3715 2011-08-19 09:35:25Z nanang $ */
+/* $Id: pjmedia_videodev.h 4016 2012-04-04 05:05:50Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -26,5 +26,6 @@
 
 #include <pjmedia-videodev/videodev.h>
 #include <pjmedia-videodev/videodev_imp.h>
+#include <pjmedia-videodev/avi_dev.h>
 
 #endif	/* __PJMEDIA_VIDEODEV_H__ */

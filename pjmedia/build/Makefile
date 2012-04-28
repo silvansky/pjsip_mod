@@ -64,11 +64,11 @@ export PJMEDIA_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
 			resample_resample.o resample_libsamplerate.o \
 			resample_port.o rtcp.o rtcp_xr.o rtp.o \
 			sdp.o sdp_cmp.o sdp_neg.o session.o silencedet.o \
-			sound_legacy.o sound_port.o stereo_port.o \
-			stream_common.o stream.o tonegen.o transport_adapter_sample.o \
+			sound_legacy.o sound_port.o stereo_port.o stream_common.o \
+			stream.o stream_info.o tonegen.o transport_adapter_sample.o \
 			transport_ice.o transport_loop.o transport_srtp.o transport_udp.o \
 			types.o vid_codec.o vid_codec_util.o \
-			vid_port.o vid_stream.o vid_tee.o \
+			vid_port.o vid_stream.o vid_stream_info.o vid_tee.o \
 			wav_player.o wav_playlist.o wav_writer.o wave.o \
 			wsola.o
 
@@ -89,7 +89,7 @@ export PJMEDIA_AUDIODEV_CFLAGS += $(_CFLAGS)
 # Defines for building PJMEDIA-VIDEODEV library
 #
 export PJMEDIA_VIDEODEV_SRCDIR = ../src/pjmedia-videodev
-export PJMEDIA_VIDEODEV_OBJS +=  errno.o videodev.o ffmpeg_dev.o \
+export PJMEDIA_VIDEODEV_OBJS +=  errno.o videodev.o avi_dev.o ffmpeg_dev.o \
 				colorbar_dev.o v4l2_dev.o
 export PJMEDIA_VIDEODEV_CFLAGS += $(_CFLAGS)
 
@@ -110,8 +110,8 @@ export PJSDP_CFLAGS += $(_CFLAGS)
 # Defines for building PJMEDIA-Codec library
 #
 export PJMEDIA_CODEC_SRCDIR = ../src/pjmedia-codec
-export PJMEDIA_CODEC_OBJS += audio_codecs.o ffmpeg_codecs.o \
-			h263_packetizer.o h264_packetizer.o x264_codec.o \
+export PJMEDIA_CODEC_OBJS += audio_codecs.o ffmpeg_vid_codecs.o \
+			h263_packetizer.o h264_packetizer.o \
 			$(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
 			ipp_codecs.o $(CODEC_OBJS) \
                         g7221_sdp_match.o amr_sdp_match.o

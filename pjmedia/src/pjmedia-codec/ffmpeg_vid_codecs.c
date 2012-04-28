@@ -1,4 +1,4 @@
-/* $Id: ffmpeg_codecs.c 3972 2012-03-09 03:29:05Z nanang $ */
+/* $Id: ffmpeg_vid_codecs.c 4056 2012-04-17 02:48:29Z nanang $ */
 /* 
 * Copyright (C) 2010-2011 Teluu Inc. (http://www.teluu.com)
 *
@@ -16,7 +16,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
 */
-#include <pjmedia-codec/ffmpeg_codecs.h>
+#include <pjmedia-codec/ffmpeg_vid_codecs.h>
 #include <pjmedia-codec/h263_packetizer.h>
 #include <pjmedia-codec/h264_packetizer.h>
 #include <pjmedia/errno.h>
@@ -34,10 +34,10 @@
 * Only build this file if PJMEDIA_HAS_FFMPEG_CODEC != 0 and 
 * PJMEDIA_HAS_VIDEO != 0
 */
-#if defined(PJMEDIA_HAS_FFMPEG_CODEC) && PJMEDIA_HAS_FFMPEG_CODEC != 0 && \
+#if defined(PJMEDIA_HAS_FFMPEG_VID_CODEC) && PJMEDIA_HAS_FFMPEG_VID_CODEC != 0 && \
 	defined(PJMEDIA_HAS_VIDEO) && (PJMEDIA_HAS_VIDEO != 0)
 
-#define THIS_FILE   "ffmpeg_codecs.c"
+#define THIS_FILE   "ffmpeg_vid_codecs.c"
 
 #define LIBAVCODEC_VER_AT_LEAST(major,minor)  (LIBAVCODEC_VERSION_MAJOR > major || \
 	(LIBAVCODEC_VERSION_MAJOR == major && \
@@ -258,7 +258,7 @@ static ffmpeg_codec_desc codec_desc[] =
 	{PJMEDIA_FORMAT_H264, PJMEDIA_RTP_PT_H264, {"H264",4},
 	 {"Constrained Baseline (level=30, pack=1)", 39}},
 	0,
-	//{720, 480},	{16, 1},	256000, 512000,
+	//{720, 480},	{15, 1},	256000, 512000,
 	{352, 288},	{30, 1}, 256000,    512000,
 	//{640, 480},	{16, 1},	256000, 512000,
 	&h264_packetize, &h264_unpacketize, &h264_preopen, &h264_postopen,
@@ -273,29 +273,27 @@ static ffmpeg_codec_desc codec_desc[] =
     {
 	{PJMEDIA_FORMAT_H263P, PJMEDIA_RTP_PT_H263P, {"H263-1998",9}},
 	PJMEDIA_FORMAT_H263,
-	{352, 288},	{30000, 1001},	256000, 512000,
+	{352, 288},	{15, 1},	256000, 256000,
 	&h263_packetize, &h263_unpacketize, &h263_preopen, NULL, NULL,
 	{2, { {{"CIF",3},   {"1",1}}, 
 	      {{"QCIF",4},  {"1",1}}, } },
     },
 #endif
 
-		{
-			{PJMEDIA_FORMAT_H263,	PJMEDIA_RTP_PT_H263,	{"H263",4}},
-		},
-		{
-			{PJMEDIA_FORMAT_H261,	PJMEDIA_RTP_PT_H261,	{"H261",4}},
-			},
-			{
-				{PJMEDIA_FORMAT_MJPEG,	PJMEDIA_RTP_PT_JPEG,	{"JPEG",4}},
-			},
-			{
-				{PJMEDIA_FORMAT_MPEG4,	0,			{"MP4V",4}},
-				},
-				{
-					{PJMEDIA_FORMAT_XVID,	0,			{"XVID",4}},
-						PJMEDIA_FORMAT_MPEG4,
-				},
+	{
+	{PJMEDIA_FORMAT_H263,	PJMEDIA_RTP_PT_H263,	{"H263",4}},
+	},
+	{
+	{PJMEDIA_FORMAT_H261,	PJMEDIA_RTP_PT_H261,	{"H261",4}},
+	},
+	{
+	{PJMEDIA_FORMAT_MJPEG,	PJMEDIA_RTP_PT_JPEG,	{"JPEG",4}},
+		PJMEDIA_FORMAT_MJPEG, {640, 480}, {25, 1},
+	},
+	{
+	{PJMEDIA_FORMAT_MPEG4,	0,			{"MP4V",4}},
+		PJMEDIA_FORMAT_MPEG4, {640, 480}, {25, 1},
+	},
 };
 
 #if PJMEDIA_HAS_FFMPEG_CODEC_H264
@@ -635,7 +633,7 @@ static int find_codec_idx_by_fmt_id(pjmedia_format_id fmt_id)
 /*
 * Initialize and register FFMPEG codec factory to pjmedia endpoint.
 */
-PJ_DEF(pj_status_t) pjmedia_codec_ffmpeg_init(pjmedia_vid_codec_mgr *mgr,
+PJ_DEF(pj_status_t) pjmedia_codec_ffmpeg_vid_init(pjmedia_vid_codec_mgr *mgr,
 																							pj_pool_factory *pf)
 {
 	pj_pool_t *pool;
@@ -666,9 +664,10 @@ PJ_DEF(pj_status_t) pjmedia_codec_ffmpeg_init(pjmedia_vid_codec_mgr *mgr,
 	if (status != PJ_SUCCESS)
 		goto on_error;
 
+	pjmedia_ffmpeg_add_ref();
 	avcodec_init(); // ПОПОВ: Устаревший вызов функции. Все само происходит в avcodec_register_all()
 	avcodec_register_all();
-	av_log_set_level(AV_LOG_ERROR);
+	//av_log_set_level(AV_LOG_ERROR);
 
 	/* Enum FFMPEG codecs */
 	for (c=av_codec_next(NULL); c; c=av_codec_next(c))
@@ -809,10 +808,18 @@ PJ_DEF(pj_status_t) pjmedia_codec_ffmpeg_init(pjmedia_vid_codec_mgr *mgr,
 		/* Enable this codec when any ffmpeg codec instance are recognized
 		* and the supported raw formats info has been collected.
 		*/
-		if ((desc->dec || desc->enc) && desc->info.dec_fmt_id_cnt)
-		{
-			desc->enabled = PJ_TRUE;
-		}
+#if defined PJMEDIA_HAS_X264_CODEC && PJMEDIA_HAS_X264_CODEC != 0 // POPOV: H264 has specific case
+    if ((desc->dec || desc->enc) && (c->id == CODEC_ID_H264 || desc->info.dec_fmt_id_cnt))
+    {
+      desc->enabled = PJ_TRUE;
+    }
+#else
+    if ((desc->dec || desc->enc) && desc->info.dec_fmt_id_cnt)
+    {
+      desc->enabled = PJ_TRUE;
+    }
+#endif
+
 
 		/* Normalize default value of clock rate */
 		if (desc->info.clock_rate == 0)
@@ -925,7 +932,7 @@ on_error:
 /*
 * Unregister FFMPEG codecs factory from pjmedia endpoint.
 */
-PJ_DEF(pj_status_t) pjmedia_codec_ffmpeg_deinit(void)
+PJ_DEF(pj_status_t) pjmedia_codec_ffmpeg_vid_deinit(void)
 {
 	pj_status_t status = PJ_SUCCESS;
 
@@ -946,6 +953,8 @@ PJ_DEF(pj_status_t) pjmedia_codec_ffmpeg_deinit(void)
 	/* Destroy pool. */
 	pj_pool_release(ffmpeg_factory.pool);
 	ffmpeg_factory.pool = NULL;
+
+	pjmedia_ffmpeg_dec_ref();
 
 	return status;
 }
@@ -1025,7 +1034,7 @@ static pj_status_t ffmpeg_default_attr( pjmedia_vid_codec_factory *factory,
     /* Decoded format */
     pjmedia_format_init_video(&attr->dec_fmt, desc->info.dec_fmt_id[0],
                               desc->size.w, desc->size.h,
-			      desc->fps.num*3/2, desc->fps.denum);
+			      desc->fps.num, desc->fps.denum);
 
 	/* Decoding fmtp */
 	attr->dec_fmtp = desc->dec_fmtp;
@@ -1034,8 +1043,8 @@ static pj_status_t ffmpeg_default_attr( pjmedia_vid_codec_factory *factory,
 	attr->enc_fmt.det.vid.avg_bps = desc->avg_bps;
 	attr->enc_fmt.det.vid.max_bps = desc->max_bps;
 
-	/* MTU */
-	attr->enc_mtu = PJMEDIA_MAX_MTU;
+	/* Encoding MTU */
+	attr->enc_mtu = PJMEDIA_MAX_VID_PAYLOAD_SIZE;
 
 	return PJ_SUCCESS;
 }
@@ -1343,6 +1352,10 @@ static pj_status_t ffmpeg_codec_open( pjmedia_vid_codec *codec,
 	ff = (ffmpeg_private*)codec->codec_data;
 
 	pj_memcpy(&ff->param, attr, sizeof(*attr));
+
+	/* Normalize encoding MTU in codec param */
+	if (attr->enc_mtu > PJMEDIA_MAX_VID_PAYLOAD_SIZE)
+		attr->enc_mtu = PJMEDIA_MAX_VID_PAYLOAD_SIZE;
 
 	/* Open the codec */
 	ff_mutex = ((struct ffmpeg_factory*)codec->factory)->mutex;
@@ -1798,6 +1811,8 @@ static pj_status_t ffmpeg_codec_decode_whole(pjmedia_vid_codec *codec,
 		output->size = 0;
 		print_ffmpeg_err(err);
 
+		PJ_LOG(3, (THIS_FILE, "Failed to decode packet %d", input->timestamp.u32.hi));
+
 		/* Broadcast missing keyframe event */
 		pjmedia_event_init(&event, PJMEDIA_EVENT_KEYFRAME_MISSING,
 			&input->timestamp, codec);
@@ -1907,5 +1922,5 @@ static pj_status_t ffmpeg_codec_decode( pjmedia_vid_codec *codec,
 #   pragma comment( lib, "avcodec.lib")
 #endif
 
-#endif	/* PJMEDIA_HAS_FFMPEG_CODEC */
+#endif	/* PJMEDIA_HAS_FFMPEG_VID_CODEC */
 

@@ -2874,6 +2874,10 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
+				RelativePath="..\src\pjmedia-videodev\avi_dev.c"
+				>
+			</File>
+			<File
 				RelativePath="..\src\pjmedia-videodev\callback_dev.c"
 				>
 			</File>
@@ -2898,10 +2902,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\pjmedia-videodev\sdl_dev.c"
-				>
-			</File>
-			<File
 				RelativePath="..\src\pjmedia-videodev\videodev.c"
 				>
 			</File>
@@ -2910,6 +2910,10 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
+			<File
+				RelativePath="..\include\pjmedia-videodev\avi_dev.h"
+				>
+			</File>
 			<File
 				RelativePath="..\include\pjmedia-videodev\config.h"
 				>

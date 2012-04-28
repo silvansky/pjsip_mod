@@ -1,4 +1,4 @@
-/* $Id: config.h 3715 2011-08-19 09:35:25Z nanang $ */
+/* $Id: config.h 4016 2012-04-04 05:05:50Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -121,6 +121,17 @@ PJ_BEGIN_DECL
 #ifndef PJMEDIA_VIDEO_DEV_HAS_V4L2
 #   define PJMEDIA_VIDEO_DEV_HAS_V4L2		0
 #endif
+
+
+/**
+ * Enable support for AVI player virtual capture device.
+ *
+ * Default: 1
+ */
+#ifndef PJMEDIA_VIDEO_DEV_HAS_AVI
+#   define PJMEDIA_VIDEO_DEV_HAS_AVI		1
+#endif
+
 
 /**
  * @}

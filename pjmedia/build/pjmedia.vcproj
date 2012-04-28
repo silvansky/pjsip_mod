@@ -4633,6 +4633,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\pjmedia\stream_info.c"
+				>
+			</File>
+			<File
 				RelativePath="..\src\pjmedia\tonegen.c"
 				>
 				<FileConfiguration
@@ -4782,6 +4786,10 @@
 			</File>
 			<File
 				RelativePath="..\src\pjmedia\vid_stream.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\pjmedia\vid_stream_info.c"
 				>
 			</File>
 			<File

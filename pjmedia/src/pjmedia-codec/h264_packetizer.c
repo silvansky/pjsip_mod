@@ -1,4 +1,4 @@
-/* $Id: h264_packetizer.c 3819 2011-10-18 01:51:01Z nanang $ */
+/* $Id: h264_packetizer.c 4006 2012-04-02 08:40:54Z nanang $ */
 /* 
 * Copyright (C) 2011 Teluu Inc. (http://www.teluu.com)
 *
@@ -107,7 +107,7 @@ PJ_DEF(pj_status_t) pjmedia_h264_packetizer_create(
 	else
 	{
 		p_->cfg.mode = PJMEDIA_H264_PACKETIZER_MODE_NON_INTERLEAVED;
-		p_->cfg.mtu = PJMEDIA_MAX_MTU;
+		p_->cfg.mtu = PJMEDIA_MAX_VID_PAYLOAD_SIZE;
 	}
 
 	*p = p_;

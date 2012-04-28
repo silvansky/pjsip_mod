@@ -1,4 +1,4 @@
-/* $Id: h263_packetizer.c 3715 2011-08-19 09:35:25Z nanang $ */
+/* $Id: h263_packetizer.c 4006 2012-04-02 08:40:54Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -98,7 +98,7 @@ PJ_DEF(pj_status_t) pjmedia_h263_packetizer_create(
 	pj_memcpy(&p_->cfg, cfg, sizeof(*cfg));
     } else {
 	p_->cfg.mode = PJMEDIA_H263_PACKETIZER_MODE_RFC4629;
-	p_->cfg.mtu = PJMEDIA_MAX_MTU;
+	p_->cfg.mtu = PJMEDIA_MAX_VID_PAYLOAD_SIZE;
     }
 
     *p = p_;

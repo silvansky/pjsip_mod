@@ -499,17 +499,25 @@ PJ_DEF(pj_status_t) pj_sock_socket(int af,
 
 
 		int iOptVal;
-		//int iOptValRet;
 		int retOpt;
 		int iOptLen;
+		int iOptValRet = 0;
 		iOptLen = sizeof(int);
-		//iOptValRet = 0;
-		//retOpt = getsockopt(*sock, SOL_SOCKET, SO_SNDBUF, (char*)iOptValRet, &iOptLen);
-		//iOptVal = 1048576;
-		iOptVal = 2097152;
-		//iOptVal = 3145728;
-		retOpt = setsockopt(*sock, SOL_SOCKET, SO_SNDBUF, (char*)iOptVal, iOptLen);
-		retOpt = setsockopt(*sock, SOL_SOCKET, SO_RCVBUF, (char*)iOptVal, iOptLen);
+		// POPOV: for debug
+		//retOpt = getsockopt(*sock, SOL_SOCKET, SO_SNDBUF, (char*)&iOptValRet, &iOptLen);
+		//retOpt = getsockopt(*sock, SOL_SOCKET, SO_RCVBUF, (char*)&iOptValRet, &iOptLen);
+
+		// POPOV: setting socket buffers
+		//iOptVal = 2097152;
+		//iOptVal = 65536;
+		//retOpt = setsockopt(*sock, SOL_SOCKET, SO_SNDBUF, (char*)&iOptVal, iOptLen);
+		//retOpt = setsockopt(*sock, SOL_SOCKET, SO_RCVBUF, (char*)&iOptVal, iOptLen);
+
+
+		// POPOV: for debug
+		//retOpt = getsockopt(*sock, SOL_SOCKET, SO_SNDBUF, (char*)&iOptValRet, &iOptLen);
+		//retOpt = getsockopt(*sock, SOL_SOCKET, SO_RCVBUF, (char*)&iOptValRet, &iOptLen);
+		 
 
 		rc = WSAIoctl(*sock, SIO_UDP_CONNRESET,
 			&bNewBehavior, sizeof(bNewBehavior),

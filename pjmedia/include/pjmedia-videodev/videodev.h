@@ -1,4 +1,4 @@
-/* $Id: videodev.h 3893 2011-12-01 10:49:07Z ming $ */
+/* $Id: videodev.h 4016 2012-04-04 05:05:50Z bennylp $ */
 /*
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -468,7 +468,7 @@ typedef struct pjmedia_vid_dev_myframe
 {
 	// ПОПОВ. callback ф-ия передающая кадр
 	pj_status_t (*put_frame_callback)(int call_id, pjmedia_frame *frame, int w, int h, int stride);
-	pj_status_t (*preview_frame_callback)(pjmedia_frame *frame, const char* colormodelName, int w, int h, int stride);
+	pj_status_t (*preview_frame_callback)(int call_id, pjmedia_frame *frame, const char* colormodelName, int w, int h, int stride);
 } pjmedia_vid_dev_myframe;
 
 extern pjmedia_vid_dev_myframe myframe;
@@ -570,16 +570,23 @@ PJ_DECL(pj_status_t) pjmedia_vid_dev_subsys_shutdown(void);
 
 /**
  * Register a supported video device factory to the video device subsystem.
+ * Application can either register a function to create the factory, or
+ * an instance of an already created factory.
+ *
  * This function can only be called after calling
  * #pjmedia_vid_dev_subsys_init().
  *
- * @param vdf       The video device factory.
+ * @param vdf       The factory creation function. Either vdf or factory
+ * 		    argument must be specified.
+ * @param factory   Factory instance. Either vdf or factory
+ * 		    argument must be specified.
  *
  * @return          PJ_SUCCESS on successful operation or the appropriate
  *                  error code.
  */
 PJ_DECL(pj_status_t)
-pjmedia_vid_register_factory(pjmedia_vid_dev_factory_create_func_ptr vdf);
+pjmedia_vid_register_factory(pjmedia_vid_dev_factory_create_func_ptr vdf,
+                             pjmedia_vid_dev_factory *factory);
 
 
 /**
@@ -588,13 +595,17 @@ pjmedia_vid_register_factory(pjmedia_vid_dev_factory_create_func_ptr vdf);
  * Devices from this factory will be unlisted. If a device from this factory
  * is currently in use, then the behavior is undefined.
  *
- * @param vdf       The video device factory.
+ * @param vdf       The video device factory. Either vdf or factory argument
+ * 		    must be specified.
+ * @param factory   The factory instance. Either vdf or factory argument
+ * 		    must be specified.
  *
  * @return          PJ_SUCCESS on successful operation or the appropriate
  *                  error code.
  */
 PJ_DECL(pj_status_t)
-pjmedia_vid_unregister_factory(pjmedia_vid_dev_factory_create_func_ptr vdf);
+pjmedia_vid_unregister_factory(pjmedia_vid_dev_factory_create_func_ptr vdf,
+                               pjmedia_vid_dev_factory *factory);
 
 
 /**
@@ -813,6 +824,16 @@ PJ_DECL(pj_status_t) pjmedia_vid_dev_stream_stop(
 PJ_DECL(pj_status_t) pjmedia_vid_dev_stream_destroy(
 					    pjmedia_vid_dev_stream *strm);
 
+/**
+ * Pause the stream.
+ *
+ * @param strm      The video stream.
+ *
+ * @return          PJ_SUCCESS on successful operation or the appropriate
+ *                  error code.
+ */
+PJ_DECL(pj_status_t) pjmedia_vid_dev_stream_pause(
+					    pjmedia_vid_dev_stream *strm);
 
 /**
  * @}

@@ -172,8 +172,8 @@ endif
 #
 ifneq (,$(filter $(AC_PJMEDIA_VIDEO),mac_os iphone_os))
 # Mac and iPhone OS specific, use obj-c
-export PJMEDIA_VIDEODEV_OBJS += callback_dev_m.o
+export PJMEDIA_VIDEODEV_OBJS += sdl_dev_m.o
 else
 # Other platforms, compile .c
-export PJMEDIA_VIDEODEV_OBJS += callback_dev.o
+export PJMEDIA_VIDEODEV_OBJS += sdl_dev.o
 endif

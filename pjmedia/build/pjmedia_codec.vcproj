@@ -2846,7 +2846,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\src\pjmedia-codec\ffmpeg_codecs.c"
+				RelativePath="..\src\pjmedia-codec\ffmpeg_vid_codecs.c"
 				>
 			</File>
 			<File
@@ -3159,7 +3159,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\include\pjmedia-codec\ffmpeg_codecs.h"
+				RelativePath="..\include\pjmedia-codec\ffmpeg_vid_codecs.h"
 				>
 			</File>
 			<File

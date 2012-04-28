@@ -28,7 +28,7 @@
 * This file is NOT supposed to be compiled as stand-alone source.
 */
 
-#define PENDING_RETRY	2
+#define PENDING_RETRY	4
 
 static void ioqueue_init( pj_ioqueue_t *ioqueue )
 {
