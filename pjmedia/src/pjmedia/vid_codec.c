@@ -1,4 +1,4 @@
-/* $Id: vid_codec.c 3956 2012-02-21 08:31:26Z nanang $ */
+/* $Id: vid_codec.c 4008 2012-04-03 04:03:19Z nanang $ */
 /* 
 * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
 * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -320,6 +320,17 @@ PJ_DEF(pj_status_t) pjmedia_vid_codec_mgr_enum_codecs(
 		{
 			if(codecs[j_test].fmt_id	== mgr->codec_desc[i].info.fmt_id)
 			{
+				codecs[j_test].dir |= mgr->codec_desc[i].info.dir;
+
+				// POPOV: merging dec_fmt_id if we have different descriptions of one codec
+				if(codecs[j_test].dec_fmt_id_cnt < mgr->codec_desc[i].info.dec_fmt_id_cnt)
+				{
+					int fmt_i = 0;
+					codecs[j_test].dec_fmt_id_cnt = mgr->codec_desc[i].info.dec_fmt_id_cnt;
+					for(fmt_i=0; fmt_i<codecs[j_test].dec_fmt_id_cnt; fmt_i++)
+						codecs[j_test].dec_fmt_id[fmt_i] = mgr->codec_desc[i].info.dec_fmt_id[fmt_i];
+				}
+
 				*count = *count - 1;
 				alreadyHas = PJ_TRUE;
 				break;
@@ -696,10 +707,13 @@ PJ_DEF(pj_status_t) pjmedia_vid_codec_mgr_get_default_param(
 
 	pj_mutex_lock(mgr->mutex);
 
+	// POPOV: we need to get description of codec that supported encode direction
+	// TODO: will find better way
 	/* First, lookup default param in codec desc */
 	for (i=0; i < mgr->codec_cnt; ++i)
 	{
-		if (pj_ansi_stricmp(codec_id, mgr->codec_desc[i].id) == 0)
+		//if (pj_ansi_stricmp(codec_id, mgr->codec_desc[i].id) == 0)
+		if (pj_ansi_stricmp(codec_id, mgr->codec_desc[i].id) == 0 && (mgr->codec_desc[i].info.dir & PJMEDIA_DIR_ENCODING))
 		{
 			codec_desc = &mgr->codec_desc[i];
 			break;
@@ -713,6 +727,26 @@ PJ_DEF(pj_status_t) pjmedia_vid_codec_mgr_get_default_param(
 
 		pj_mutex_unlock(mgr->mutex);
 		return PJ_SUCCESS;
+	}
+
+	// POPOV: if we have a codec desc,	we get factory from description direct
+	if(codec_desc)
+	{ pj_status_t codec_status;
+		factory = codec_desc->factory;
+		codec_status = (*factory->op->test_alloc)(factory, info);
+		if(codec_status == PJ_SUCCESS || codec_status == PJMEDIA_CODEC_DIR_ENCODE || codec_status == PJMEDIA_CODEC_DIR_DECODE)
+		{
+			status = (*factory->op->default_attr)(factory, info, param);
+			if (status == PJ_SUCCESS)
+			{
+				/* Check for invalid max_bps. */
+				//if (param->info.max_bps < param->info.avg_bps)
+				//    param->info.max_bps = param->info.avg_bps;
+
+				pj_mutex_unlock(mgr->mutex);
+				return PJ_SUCCESS;
+			}
+		}
 	}
 
 	/* Otherwise query the default param from codec factory */
@@ -812,11 +846,19 @@ PJ_DEF(pj_status_t) pjmedia_vid_codec_mgr_set_default_param(
 
 	/* Update codec default param */
 	p->param = pjmedia_vid_codec_param_clone(pool, param);
-	if (!p)
+	if (!p->param)
 		return PJ_EINVAL;
 	codec_desc->def_param = p;
 
 	pj_mutex_unlock(mgr->mutex);
+
+	/* Release old pool at the very end, as application tends to apply changes
+	* to the existing/old codec param fetched using
+	* pjmedia_vid_codec_mgr_get_default_param() which doesn't do deep clone.
+	*/
+  if (old_pool)
+		pj_pool_release(old_pool);
+
 
 	return PJ_SUCCESS;
 }

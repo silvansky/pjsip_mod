@@ -1,4 +1,4 @@
-/* $Id: vid_dev_test.c 3905 2011-12-09 05:15:39Z ming $ */
+/* $Id: vid_dev_test.c 4049 2012-04-13 06:24:23Z ming $ */
 /*
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -19,8 +19,7 @@
  */
 #include "test.h"
 #include <pjmedia-audiodev/audiodev.h>
-#include <pjmedia-codec/ffmpeg_codecs.h>
-#include <pjmedia-codec/x264_codec.h>
+#include <pjmedia-codec/ffmpeg_vid_codecs.h>
 #include <pjmedia/vid_codec.h>
 #include <pjmedia_videodev.h>
 

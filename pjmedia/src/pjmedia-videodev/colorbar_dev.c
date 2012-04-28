@@ -153,7 +153,8 @@ static pjmedia_vid_dev_stream_op stream_op =
     &cbar_stream_get_frame,
     NULL,
     &cbar_stream_stop,
-    &cbar_stream_destroy
+    &cbar_stream_destroy,
+		NULL
 };
 
 

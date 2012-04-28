@@ -1,4 +1,4 @@
-/* $Id: wav_player.c 3878 2011-10-31 10:31:23Z ming $ */
+/* $Id: wav_player.c 4031 2012-04-09 07:15:45Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -451,6 +451,7 @@ PJ_DEF(pj_status_t) pjmedia_wav_player_port_set_pos(pjmedia_port *port,
 						    pj_uint32_t bytes )
 {
     struct file_reader_port *fport;
+    pj_status_t status;
 
     /* Sanity check */
     PJ_ASSERT_RETURN(port, PJ_EINVAL);
@@ -471,7 +472,13 @@ PJ_DEF(pj_status_t) pjmedia_wav_player_port_set_pos(pjmedia_port *port,
     pj_file_setpos( fport->fd, fport->fpos, PJ_SEEK_SET);
 
     fport->eof = PJ_FALSE;
-    return fill_buffer(fport);
+    status = fill_buffer(fport);
+    if (status != PJ_SUCCESS)
+	return status;
+
+    fport->readpos = fport->buf;
+
+    return PJ_SUCCESS;
 }
 
 

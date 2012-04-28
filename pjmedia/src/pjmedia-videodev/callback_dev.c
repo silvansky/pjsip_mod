@@ -478,7 +478,8 @@ static pjmedia_vid_dev_stream_op stream_op =
 	NULL,
 	&callback_stream_put_frame,
 	&callback_stream_stop,
-	&callback_stream_destroy
+	&callback_stream_destroy,
+	NULL
 };
 
 

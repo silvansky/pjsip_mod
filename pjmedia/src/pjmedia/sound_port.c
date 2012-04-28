@@ -1,4 +1,4 @@
-/* $Id: sound_port.c 3664 2011-07-19 03:42:28Z nanang $ */
+/* $Id: sound_port.c 3999 2012-03-30 07:10:13Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -441,7 +441,6 @@ PJ_DEF(pj_status_t) pjmedia_snd_port_create2(pj_pool_t *pool,
     snd_port->dir = prm->base.dir;
     snd_port->rec_id = prm->base.rec_id;
     snd_port->play_id = prm->base.play_id;
-    snd_port->dir = PJMEDIA_DIR_CAPTURE_PLAYBACK;
     snd_port->clock_rate = prm->base.clock_rate;
     snd_port->channel_count = prm->base.channel_count;
     snd_port->samples_per_frame = prm->base.samples_per_frame;

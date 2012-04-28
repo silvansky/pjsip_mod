@@ -1,4 +1,4 @@
-/* $Id: stun_sock.c 3841 2011-10-24 09:28:13Z ming $ */
+/* $Id: stun_sock.c 3999 2012-03-30 07:10:13Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -504,7 +504,7 @@ static pj_status_t get_mapped_addr(pj_stun_sock *stun_sock)
 				    PJ_FALSE, PJ_TRUE, &stun_sock->srv_addr,
 				    pj_sockaddr_get_len(&stun_sock->srv_addr),
 				    tdata);
-    if (status != PJ_SUCCESS)
+    if (status != PJ_SUCCESS && status != PJ_EPENDING)
 	goto on_error;
 
     return PJ_SUCCESS;

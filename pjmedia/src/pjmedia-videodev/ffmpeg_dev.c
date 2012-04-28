@@ -132,7 +132,8 @@ static pjmedia_vid_dev_stream_op stream_op =
     &ffmpeg_stream_get_frame,
     NULL,
     &ffmpeg_stream_stop,
-    &ffmpeg_stream_destroy
+    &ffmpeg_stream_destroy,
+		NULL
 };
 
 

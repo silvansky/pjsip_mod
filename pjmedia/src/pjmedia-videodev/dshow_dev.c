@@ -160,6 +160,7 @@ static pj_status_t dshow_stream_put_frame(pjmedia_vid_dev_stream *strm,
 																					const pjmedia_frame *frame);
 static pj_status_t dshow_stream_stop(pjmedia_vid_dev_stream *strm);
 static pj_status_t dshow_stream_destroy(pjmedia_vid_dev_stream *strm);
+static pj_status_t dshow_stream_pause(pjmedia_vid_dev_stream *strm);
 
 /* Operations */
 static pjmedia_vid_dev_factory_op factory_op =
@@ -194,7 +195,8 @@ static pjmedia_vid_dev_stream_op stream_op =
 	NULL,
 	&dshow_stream_put_frame,
 	&dshow_stream_stop,
-	&dshow_stream_destroy
+	&dshow_stream_destroy,
+	&dshow_stream_pause
 };
 
 
@@ -689,13 +691,233 @@ static dshow_fmt_info* get_dshow_format_info(pjmedia_format_id id)
 	return NULL;
 }
 
+//////////////static pj_status_t create_filter_graph(pjmedia_dir dir,
+//////////////																			 unsigned id,
+//////////////																			 pj_bool_t use_def_size,
+//////////////																			 pj_bool_t use_def_fps,
+//////////////struct dshow_factory *df,
+//////////////struct dshow_stream *strm,
+//////////////struct dshow_graph *graph)
+//////////////{
+//////////////	HRESULT hr, hrInit;
+//////////////	IEnumPins *pEnum;
+//////////////	IPin *srcpin = NULL;
+//////////////	IPin *sinkpin = NULL;
+//////////////	AM_MEDIA_TYPE *mediatype= NULL, mtype;
+//////////////	VIDEOINFOHEADER *video_info, *vi = NULL;
+//////////////	pjmedia_video_format_detail *vfd;
+//////////////	const pjmedia_video_format_info *vfi;
+//////////////
+//////////////	vfi = pjmedia_get_video_format_info(pjmedia_video_format_mgr_instance(), strm->param.fmt.id);
+//////////////	if (!vfi)
+//////////////		return PJMEDIA_EVID_BADFORMAT;
+//////////////
+//////////////	hrInit = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+//////////////	//hrInit = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+//////////////	
+//////////////
+//////////////	hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC, &IID_IFilterGraph, (LPVOID *)&graph->filter_graph);
+//////////////	if (FAILED(hr))
+//////////////	{
+//////////////		goto on_error;
+//////////////	}
+//////////////
+//////////////	hr = IFilterGraph_QueryInterface(graph->filter_graph, &IID_IMediaFilter, (LPVOID *)&graph->media_filter);
+//////////////	if (FAILED(hr))
+//////////////	{
+//////////////		goto on_error;
+//////////////	}
+//////////////
+//////////////	if (dir == PJMEDIA_DIR_CAPTURE)
+//////////////	{
+//////////////		hr = get_cap_device(df, id, &graph->source_filter);
+//////////////		if (FAILED(hr))
+//////////////		{
+//////////////			goto on_error;
+//////////////		}
+//////////////	}
+//////////////	else
+//////////////	{
+//////////////		graph->source_filter = SourceFilter_Create(&graph->csource_filter);
+//////////////	}
+//////////////
+//////////////	hr = IFilterGraph_AddFilter(graph->filter_graph, graph->source_filter, L"capture");
+//////////////	if (FAILED(hr))
+//////////////	{
+//////////////		goto on_error;
+//////////////	}
+//////////////
+//////////////	if (dir == PJMEDIA_DIR_CAPTURE)
+//////////////	{
+//////////////		graph->rend_filter = NullRenderer_Create(input_cb, strm);
+//////////////	}
+//////////////	else 
+//////////////	{
+//////////////		hr = CoCreateInstance(&CLSID_VideoMixingRenderer, NULL, CLSCTX_INPROC, &IID_IBaseFilter, (LPVOID *)&graph->rend_filter);
+//////////////		if (FAILED (hr))
+//////////////		{
+//////////////			goto on_error;
+//////////////		}
+//////////////	}
+//////////////
+//////////////	IBaseFilter_EnumPins(graph->rend_filter, &pEnum);
+//////////////	if (SUCCEEDED(hr))
+//////////////	{
+//////////////		// Loop through all the pins
+//////////////		IPin *pPin = NULL;
+//////////////
+//////////////		while (IEnumPins_Next(pEnum, 1, &pPin, NULL) == S_OK)
+//////////////		{
+//////////////			PIN_DIRECTION pindirtmp;
+//////////////
+//////////////			hr = IPin_QueryDirection(pPin, &pindirtmp);
+//////////////			if (hr == S_OK && pindirtmp == PINDIR_INPUT)
+//////////////			{
+//////////////				sinkpin = pPin;
+//////////////				break;
+//////////////			}
+//////////////			IPin_Release(pPin);
+//////////////		}
+//////////////		IEnumPins_Release(pEnum);
+//////////////	}
+//////////////
+//////////////	vfd = pjmedia_format_get_video_format_detail(&strm->param.fmt, PJ_TRUE);
+//////////////
+//////////////	enum_dev_cap(graph->source_filter, dir, get_dshow_format_info(strm->param.fmt.id)->dshow_format, &mediatype, &srcpin, NULL);
+//////////////	graph->mediatype = mediatype;
+//////////////
+//////////////	if (srcpin && dir == PJMEDIA_DIR_RENDER)
+//////////////	{
+//////////////		mediatype = graph->mediatype = &mtype;
+//////////////
+//////////////		memset (mediatype, 0, sizeof(AM_MEDIA_TYPE));
+//////////////		mediatype->majortype = MEDIATYPE_Video;
+//////////////		mediatype->subtype = *(get_dshow_format_info(strm->param.fmt.id)->dshow_format);
+//////////////		mediatype->bFixedSizeSamples = TRUE;
+//////////////		mediatype->bTemporalCompression = FALSE;
+//////////////
+//////////////		vi = (VIDEOINFOHEADER *)CoTaskMemAlloc(sizeof(VIDEOINFOHEADER));
+//////////////		memset (vi, 0, sizeof(VIDEOINFOHEADER));
+//////////////		mediatype->formattype = FORMAT_VideoInfo;
+//////////////		mediatype->cbFormat = sizeof(VIDEOINFOHEADER);
+//////////////		mediatype->pbFormat = (BYTE *)vi;
+//////////////
+//////////////		vi->rcSource.bottom = vfd->size.h;
+//////////////		vi->rcSource.right = vfd->size.w;
+//////////////		vi->rcTarget.bottom = vfd->size.h;
+//////////////		vi->rcTarget.right = vfd->size.w;
+//////////////
+////////////////////<<<<<<< .mine
+//////////////		vi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+//////////////		vi->bmiHeader.biPlanes = 1;
+//////////////		vi->bmiHeader.biBitCount = vfi->bpp;
+//////////////		vi->bmiHeader.biCompression = strm->param.fmt.id;
+//////////////	}
+////////////////////=======
+//////////////    if (!srcpin || !sinkpin || !mediatype) {
+//////////////        hr = VFW_E_TYPE_NOT_ACCEPTED;
+//////////////        goto on_error;
+//////////////    }
+//////////////    video_info = (VIDEOINFOHEADER *) mediatype->pbFormat;
+//////////////    if (!use_def_size) {
+//////////////        video_info->bmiHeader.biWidth = vfd->size.w;
+//////////////        video_info->bmiHeader.biHeight = vfd->size.h;
+//////////////    }
+//////////////    if (video_info->AvgTimePerFrame == 0 ||
+//////////////        (!use_def_fps && vfd->fps.num != 0))
+//////////////    {
+//////////////        video_info->AvgTimePerFrame = (LONGLONG) (10000000 * 
+//////////////						  (double)vfd->fps.denum /
+//////////////						  vfd->fps.num);
+//////////////    }
+//////////////    video_info->bmiHeader.biSizeImage = DIBSIZE(video_info->bmiHeader);
+//////////////    mediatype->lSampleSize = DIBSIZE(video_info->bmiHeader);
+//////////////    if (graph->csource_filter)
+//////////////        SourceFilter_SetMediaType(graph->csource_filter,
+//////////////                                  mediatype);
+//////////////////////>>>>>>> .r3954
+//////////////
+//////////////	//////////if (!srcpin || !sinkpin || !mediatype)
+//////////////	//////////{
+//////////////	//////////	hr = VFW_E_TYPE_NOT_ACCEPTED;
+//////////////	//////////	goto on_error;
+//////////////	//////////}
+//////////////	//////////video_info = (VIDEOINFOHEADER *) mediatype->pbFormat;
+//////////////	//////////if (!use_def_size)
+//////////////	//////////{
+//////////////	//////////	video_info->bmiHeader.biWidth = vfd->size.w;
+//////////////	//////////	video_info->bmiHeader.biHeight = vfd->size.h;
+//////////////	//////////}
+//////////////	//////////if (!use_def_fps && vfd->fps.num != 0)
+//////////////	//////////	video_info->AvgTimePerFrame = (LONGLONG) (10000000 * (double)vfd->fps.denum / vfd->fps.num);
+//////////////	//////////video_info->bmiHeader.biSizeImage = DIBSIZE(video_info->bmiHeader);
+//////////////	//////////mediatype->lSampleSize = DIBSIZE(video_info->bmiHeader);
+//////////////	//////////if (graph->csource_filter)
+//////////////	//////////	SourceFilter_SetMediaType(graph->csource_filter, mediatype);
+//////////////
+//////////////	hr = IFilterGraph_AddFilter(graph->filter_graph, (IBaseFilter *)graph->rend_filter, L"renderer");
+//////////////	if (FAILED(hr))
+//////////////		goto on_error;
+//////////////
+//////////////	hr = IFilterGraph_ConnectDirect(graph->filter_graph, srcpin, sinkpin, mediatype);
+//////////////	if (SUCCEEDED(hr))
+//////////////	{
+//////////////		if (use_def_size || use_def_fps)
+//////////////		{
+//////////////			pjmedia_format_init_video(&strm->param.fmt, strm->param.fmt.id,
+//////////////				video_info->bmiHeader.biWidth,
+//////////////				video_info->bmiHeader.biHeight,
+//////////////				10000000,
+//////////////				(unsigned)video_info->AvgTimePerFrame);
+//////////////		}
+//////////////
+//////////////		strm->frm_buf_size = 0;
+//////////////		if (dir == PJMEDIA_DIR_CAPTURE && video_info->bmiHeader.biCompression == BI_RGB && video_info->bmiHeader.biHeight > 0)
+//////////////		{
+//////////////			/* Allocate buffer to flip the captured image. */
+//////////////			strm->frm_buf_size = (video_info->bmiHeader.biBitCount >> 3) * video_info->bmiHeader.biWidth;
+//////////////			strm->frm_buf = pj_pool_alloc(strm->pool, strm->frm_buf_size);
+//////////////		}
+//////////////	}
+//////////////
+//////////////on_error:
+//////////////	if (srcpin)
+//////////////		IPin_Release(srcpin);
+//////////////	if (sinkpin)
+//////////////		IPin_Release(sinkpin);
+//////////////	if (vi)
+//////////////		CoTaskMemFree(vi);
+//////////////	if (FAILED(hr))
+//////////////	{
+//////////////		char msg[80];
+//////////////		if (AMGetErrorText(hr, msg, sizeof(msg)))
+//////////////		{
+//////////////			PJ_LOG(4,(THIS_FILE, "Error creating filter graph: %s (hr=0x%x)", 
+//////////////				msg, hr));
+//////////////		}
+//////////////
+//////////////		if(hrInit != RPC_E_CHANGED_MODE)
+//////////////			CoUninitialize();
+//////////////
+//////////////		return PJ_EUNKNOWN;
+//////////////	}
+//////////////
+//////////////	if(hrInit != RPC_E_CHANGED_MODE)
+//////////////		CoUninitialize();
+//////////////
+//////////////	return PJ_SUCCESS;
+//////////////}
+
+
+
+
 static pj_status_t create_filter_graph(pjmedia_dir dir,
 																			 unsigned id,
 																			 pj_bool_t use_def_size,
 																			 pj_bool_t use_def_fps,
-struct dshow_factory *df,
-struct dshow_stream *strm,
-struct dshow_graph *graph)
+																			 struct dshow_factory *df,
+																			 struct dshow_stream *strm,
+																			 struct dshow_graph *graph)
 {
 	HRESULT hr, hrInit;
 	IEnumPins *pEnum;
@@ -706,71 +928,62 @@ struct dshow_graph *graph)
 	pjmedia_video_format_detail *vfd;
 	const pjmedia_video_format_info *vfi;
 
-	vfi = pjmedia_get_video_format_info(pjmedia_video_format_mgr_instance(), strm->param.fmt.id);
+	vfi = pjmedia_get_video_format_info(pjmedia_video_format_mgr_instance(),
+		strm->param.fmt.id);
 	if (!vfi)
 		return PJMEDIA_EVID_BADFORMAT;
 
 	hrInit = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-	//hrInit = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-	
 
-	hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC, &IID_IFilterGraph, (LPVOID *)&graph->filter_graph);
-	if (FAILED(hr))
-	{
+
+	hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC,
+												&IID_IFilterGraph, (LPVOID *)&graph->filter_graph);
+	if (FAILED(hr)) {
 		goto on_error;
 	}
 
-	hr = IFilterGraph_QueryInterface(graph->filter_graph, &IID_IMediaFilter, (LPVOID *)&graph->media_filter);
-	if (FAILED(hr))
-	{
+	hr = IFilterGraph_QueryInterface(graph->filter_graph, &IID_IMediaFilter,
+		(LPVOID *)&graph->media_filter);
+	if (FAILED(hr)) {
 		goto on_error;
 	}
 
-	if (dir == PJMEDIA_DIR_CAPTURE)
-	{
+	if (dir == PJMEDIA_DIR_CAPTURE) {
 		hr = get_cap_device(df, id, &graph->source_filter);
-		if (FAILED(hr))
-		{
+		if (FAILED(hr)) {
 			goto on_error;
 		}
-	}
-	else
-	{
+	} else {
 		graph->source_filter = SourceFilter_Create(&graph->csource_filter);
 	}
 
-	hr = IFilterGraph_AddFilter(graph->filter_graph, graph->source_filter, L"capture");
-	if (FAILED(hr))
-	{
+	hr = IFilterGraph_AddFilter(graph->filter_graph, graph->source_filter,
+		L"capture");
+	if (FAILED(hr)) {
 		goto on_error;
 	}
 
-	if (dir == PJMEDIA_DIR_CAPTURE)
-	{
+	if (dir == PJMEDIA_DIR_CAPTURE) {
 		graph->rend_filter = NullRenderer_Create(input_cb, strm);
-	}
-	else 
-	{
-		hr = CoCreateInstance(&CLSID_VideoMixingRenderer, NULL, CLSCTX_INPROC, &IID_IBaseFilter, (LPVOID *)&graph->rend_filter);
-		if (FAILED (hr))
-		{
+	} else {
+		hr = CoCreateInstance(&CLSID_VideoMixingRenderer, NULL,
+			CLSCTX_INPROC, &IID_IBaseFilter,
+			(LPVOID *)&graph->rend_filter);
+		if (FAILED (hr)) {
 			goto on_error;
 		}
 	}
 
 	IBaseFilter_EnumPins(graph->rend_filter, &pEnum);
-	if (SUCCEEDED(hr))
-	{
+	if (SUCCEEDED(hr)) {
 		// Loop through all the pins
 		IPin *pPin = NULL;
 
-		while (IEnumPins_Next(pEnum, 1, &pPin, NULL) == S_OK)
-		{
+		while (IEnumPins_Next(pEnum, 1, &pPin, NULL) == S_OK) {
 			PIN_DIRECTION pindirtmp;
 
 			hr = IPin_QueryDirection(pPin, &pindirtmp);
-			if (hr == S_OK && pindirtmp == PINDIR_INPUT)
-			{
+			if (hr == S_OK && pindirtmp == PINDIR_INPUT) {
 				sinkpin = pPin;
 				break;
 			}
@@ -781,20 +994,23 @@ struct dshow_graph *graph)
 
 	vfd = pjmedia_format_get_video_format_detail(&strm->param.fmt, PJ_TRUE);
 
-	enum_dev_cap(graph->source_filter, dir, get_dshow_format_info(strm->param.fmt.id)->dshow_format, &mediatype, &srcpin, NULL);
+	enum_dev_cap(graph->source_filter, dir,
+		get_dshow_format_info(strm->param.fmt.id)->dshow_format,
+		&mediatype, &srcpin, NULL);
 	graph->mediatype = mediatype;
 
-	if (srcpin && dir == PJMEDIA_DIR_RENDER)
-	{
+	if (srcpin && dir == PJMEDIA_DIR_RENDER) {
 		mediatype = graph->mediatype = &mtype;
 
 		memset (mediatype, 0, sizeof(AM_MEDIA_TYPE));
 		mediatype->majortype = MEDIATYPE_Video;
-		mediatype->subtype = *(get_dshow_format_info(strm->param.fmt.id)->dshow_format);
+		mediatype->subtype = *(get_dshow_format_info(strm->param.fmt.id)->
+			dshow_format);
 		mediatype->bFixedSizeSamples = TRUE;
 		mediatype->bTemporalCompression = FALSE;
 
-		vi = (VIDEOINFOHEADER *)CoTaskMemAlloc(sizeof(VIDEOINFOHEADER));
+		vi = (VIDEOINFOHEADER *)
+			CoTaskMemAlloc(sizeof(VIDEOINFOHEADER));
 		memset (vi, 0, sizeof(VIDEOINFOHEADER));
 		mediatype->formattype = FORMAT_VideoInfo;
 		mediatype->cbFormat = sizeof(VIDEOINFOHEADER);
@@ -805,63 +1021,44 @@ struct dshow_graph *graph)
 		vi->rcTarget.bottom = vfd->size.h;
 		vi->rcTarget.right = vfd->size.w;
 
-//////<<<<<<< .mine
 		vi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 		vi->bmiHeader.biPlanes = 1;
 		vi->bmiHeader.biBitCount = vfi->bpp;
 		vi->bmiHeader.biCompression = strm->param.fmt.id;
 	}
-//////=======
-    if (!srcpin || !sinkpin || !mediatype) {
-        hr = VFW_E_TYPE_NOT_ACCEPTED;
-        goto on_error;
-    }
-    video_info = (VIDEOINFOHEADER *) mediatype->pbFormat;
-    if (!use_def_size) {
-        video_info->bmiHeader.biWidth = vfd->size.w;
-        video_info->bmiHeader.biHeight = vfd->size.h;
-    }
-    if (video_info->AvgTimePerFrame == 0 ||
-        (!use_def_fps && vfd->fps.num != 0))
-    {
-        video_info->AvgTimePerFrame = (LONGLONG) (10000000 * 
-						  (double)vfd->fps.denum /
-						  vfd->fps.num);
-    }
-    video_info->bmiHeader.biSizeImage = DIBSIZE(video_info->bmiHeader);
-    mediatype->lSampleSize = DIBSIZE(video_info->bmiHeader);
-    if (graph->csource_filter)
-        SourceFilter_SetMediaType(graph->csource_filter,
-                                  mediatype);
-////////>>>>>>> .r3954
 
-	//////////if (!srcpin || !sinkpin || !mediatype)
-	//////////{
-	//////////	hr = VFW_E_TYPE_NOT_ACCEPTED;
-	//////////	goto on_error;
-	//////////}
-	//////////video_info = (VIDEOINFOHEADER *) mediatype->pbFormat;
-	//////////if (!use_def_size)
-	//////////{
-	//////////	video_info->bmiHeader.biWidth = vfd->size.w;
-	//////////	video_info->bmiHeader.biHeight = vfd->size.h;
-	//////////}
-	//////////if (!use_def_fps && vfd->fps.num != 0)
-	//////////	video_info->AvgTimePerFrame = (LONGLONG) (10000000 * (double)vfd->fps.denum / vfd->fps.num);
-	//////////video_info->bmiHeader.biSizeImage = DIBSIZE(video_info->bmiHeader);
-	//////////mediatype->lSampleSize = DIBSIZE(video_info->bmiHeader);
-	//////////if (graph->csource_filter)
-	//////////	SourceFilter_SetMediaType(graph->csource_filter, mediatype);
+	if (!srcpin || !sinkpin || !mediatype) {
+		hr = VFW_E_TYPE_NOT_ACCEPTED;
+		goto on_error;
+	}
+	video_info = (VIDEOINFOHEADER *) mediatype->pbFormat;
+	if (!use_def_size) {
+		video_info->bmiHeader.biWidth = vfd->size.w;
+		video_info->bmiHeader.biHeight = vfd->size.h;
+	}
+	if (video_info->AvgTimePerFrame == 0 ||
+		(!use_def_fps && vfd->fps.num != 0))
+	{
+		video_info->AvgTimePerFrame = (LONGLONG) (10000000 * 
+			(double)vfd->fps.denum /
+			vfd->fps.num);
+	}
+	video_info->bmiHeader.biSizeImage = DIBSIZE(video_info->bmiHeader);
+	mediatype->lSampleSize = DIBSIZE(video_info->bmiHeader);
+	if (graph->csource_filter)
+		SourceFilter_SetMediaType(graph->csource_filter,
+		mediatype);
 
-	hr = IFilterGraph_AddFilter(graph->filter_graph, (IBaseFilter *)graph->rend_filter, L"renderer");
+	hr = IFilterGraph_AddFilter(graph->filter_graph,
+		(IBaseFilter *)graph->rend_filter,
+		L"renderer");
 	if (FAILED(hr))
 		goto on_error;
 
-	hr = IFilterGraph_ConnectDirect(graph->filter_graph, srcpin, sinkpin, mediatype);
-	if (SUCCEEDED(hr))
-	{
-		if (use_def_size || use_def_fps)
-		{
+	hr = IFilterGraph_ConnectDirect(graph->filter_graph, srcpin, sinkpin,
+		mediatype);
+	if (SUCCEEDED(hr)) {
+		if (use_def_size || use_def_fps) {
 			pjmedia_format_init_video(&strm->param.fmt, strm->param.fmt.id,
 				video_info->bmiHeader.biWidth,
 				video_info->bmiHeader.biHeight,
@@ -870,10 +1067,13 @@ struct dshow_graph *graph)
 		}
 
 		strm->frm_buf_size = 0;
-		if (dir == PJMEDIA_DIR_CAPTURE && video_info->bmiHeader.biCompression == BI_RGB && video_info->bmiHeader.biHeight > 0)
+		if (dir == PJMEDIA_DIR_CAPTURE &&
+			video_info->bmiHeader.biCompression == BI_RGB &&
+			video_info->bmiHeader.biHeight > 0)
 		{
 			/* Allocate buffer to flip the captured image. */
-			strm->frm_buf_size = (video_info->bmiHeader.biBitCount >> 3) * video_info->bmiHeader.biWidth;
+			strm->frm_buf_size = (video_info->bmiHeader.biBitCount >> 3) *
+				video_info->bmiHeader.biWidth;
 			strm->frm_buf = pj_pool_alloc(strm->pool, strm->frm_buf_size);
 		}
 	}
@@ -885,14 +1085,16 @@ on_error:
 		IPin_Release(sinkpin);
 	if (vi)
 		CoTaskMemFree(vi);
-	if (FAILED(hr))
-	{
+	if (FAILED(hr)) {
 		char msg[80];
-		if (AMGetErrorText(hr, msg, sizeof(msg)))
-		{
+		if (AMGetErrorText(hr, msg, sizeof(msg))) {
 			PJ_LOG(4,(THIS_FILE, "Error creating filter graph: %s (hr=0x%x)", 
 				msg, hr));
 		}
+		
+		if(hrInit != RPC_E_CHANGED_MODE)
+			CoUninitialize();
+
 		return PJ_EUNKNOWN;
 	}
 
@@ -901,6 +1103,10 @@ on_error:
 
 	return PJ_SUCCESS;
 }
+
+
+
+
 
 static void destroy_filter_graph(struct dshow_stream * stream)
 {
@@ -1132,6 +1338,32 @@ static pj_status_t dshow_stream_destroy(pjmedia_vid_dev_stream *strm)
 	destroy_filter_graph(stream);
 
 	pj_pool_release(stream->pool);
+
+	return PJ_SUCCESS;
+}
+
+/* API: Pause stream. */
+static pj_status_t dshow_stream_pause(pjmedia_vid_dev_stream *strm)
+{
+	struct dshow_stream *stream = (struct dshow_stream*)strm;
+	HRESULT hr;
+
+	stream->quit_flag = PJ_FALSE;
+	stream->cap_thread_exited = PJ_FALSE;
+	stream->rend_thread_exited = PJ_FALSE;
+
+	hr = IMediaFilter_Pause(stream->dgraph.media_filter);
+	if (FAILED(hr))
+	{
+		char msg[80];
+		if (AMGetErrorText(hr, msg, sizeof(msg)))
+		{
+			PJ_LOG(4,(THIS_FILE, "Error pausing media: %s", msg));
+		}
+		return PJ_EUNKNOWN;
+	}
+
+	PJ_LOG(4, (THIS_FILE, "Pausing dshow video stream"));
 
 	return PJ_SUCCESS;
 }
