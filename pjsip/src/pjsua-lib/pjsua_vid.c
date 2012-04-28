@@ -1,4 +1,4 @@
-/* $Id: pjsua_vid.c 3956 2012-02-21 08:31:26Z nanang $ */
+/* $Id: pjsua_vid.c 4060 2012-04-17 09:55:30Z ming $ */
 /* 
 * Copyright (C) 2011-2011 Teluu Inc. (http://www.teluu.com)
 *
@@ -18,6 +18,8 @@
 */
 #include <pjsua-lib/pjsua.h>
 #include <pjsua-lib/pjsua_internal.h>
+
+#if defined(PJSUA_MEDIA_HAS_PJMEDIA) && PJSUA_MEDIA_HAS_PJMEDIA != 0
 
 #define THIS_FILE	"pjsua_vid.c"
 
@@ -71,8 +73,8 @@ pj_status_t pjsua_vid_subsys_init(void)
 		goto on_error;
 	}
 
-#if PJMEDIA_HAS_VIDEO && PJMEDIA_HAS_FFMPEG_CODEC
-	status = pjmedia_codec_ffmpeg_init(NULL, &pjsua_var.cp.factory);
+#if PJMEDIA_HAS_VIDEO && PJMEDIA_HAS_FFMPEG_VID_CODEC
+	status = pjmedia_codec_ffmpeg_vid_init(NULL, &pjsua_var.cp.factory);
 	if (status != PJ_SUCCESS)
 	{
 		PJ_PERROR(1,(THIS_FILE, status, "Error initializing ffmpeg library"));
@@ -145,8 +147,8 @@ pj_status_t pjsua_vid_subsys_destroy(void)
 	pjmedia_codec_x264_deinit();
 #endif
 
-#if PJMEDIA_HAS_FFMPEG_CODEC
-	pjmedia_codec_ffmpeg_deinit();
+#if PJMEDIA_HAS_FFMPEG_VID_CODEC
+	pjmedia_codec_ffmpeg_vid_deinit();
 #endif
 
 	if (pjmedia_vid_codec_mgr_instance())
@@ -189,6 +191,7 @@ PJ_DEF(void) pjsua_vid_preview_param_default(pjsua_vid_preview_param *p)
 {
 	p->rend_id = PJMEDIA_VID_DEFAULT_RENDER_DEV;
 	p->show = PJ_TRUE;
+	p->wnd_flags = 0;
 }
 
 
@@ -242,6 +245,31 @@ PJ_DEF(pj_status_t) pjsua_vid_enum_devs(pjmedia_vid_dev_info info[],
 /*****************************************************************************
 * Codecs.
 */
+
+static pj_status_t find_codecs_with_rtp_packing(
+	const pj_str_t *codec_id,
+	unsigned *count,
+	const pjmedia_vid_codec_info *p_info[])
+{
+	const pjmedia_vid_codec_info *info[32];
+	unsigned i, j, count_ = PJ_ARRAY_SIZE(info);
+	pj_status_t status;
+
+	status = pjmedia_vid_codec_mgr_find_codecs_by_id(NULL, codec_id,
+		&count_, info, NULL);
+	if (status != PJ_SUCCESS)
+		return status;
+
+	for (i = 0, j = 0; i < count_ && j<*count; ++i) {
+		if ((info[i]->packings & PJMEDIA_VID_PACKING_PACKETS) == 0)
+			continue;
+		p_info[j++] = info[i];
+	}
+	*count = j;
+	return PJ_SUCCESS;
+}
+
+
 
 /*
 * Enum all supported video codecs in the system.
@@ -307,23 +335,19 @@ PJ_DEF(pj_status_t) pjsua_vid_codec_get_param(
 	const pj_str_t *codec_id,
 	pjmedia_vid_codec_param *param)
 {
-	const pj_str_t all = { NULL, 0 };
-	const pjmedia_vid_codec_info *info;
-	unsigned count = 1;
+	const pjmedia_vid_codec_info *info[2];
+	unsigned count = 2;
+
 	pj_status_t status;
 
-	if (codec_id->slen==1 && *codec_id->ptr=='*')
-		codec_id = &all;
-
-	status = pjmedia_vid_codec_mgr_find_codecs_by_id(NULL, codec_id,
-		&count, &info, NULL);
+	status = find_codecs_with_rtp_packing(codec_id, &count, info);
 	if (status != PJ_SUCCESS)
 		return status;
 
 	if (count != 1)
 		return (count > 1? PJ_ETOOMANY : PJ_ENOTFOUND);
 
-	status = pjmedia_vid_codec_mgr_get_default_param(NULL, info, param);
+	status = pjmedia_vid_codec_mgr_get_default_param(NULL, info[0], param);
 	return status;
 }
 
@@ -339,16 +363,12 @@ PJ_DEF(pj_status_t) pjsua_vid_codec_set_param(
 	unsigned count = 2;
 	pj_status_t status;
 
-	status = pjmedia_vid_codec_mgr_find_codecs_by_id(NULL, codec_id,
-		&count, info, NULL);
+	status = find_codecs_with_rtp_packing(codec_id, &count, info);
 	if (status != PJ_SUCCESS)
 		return status;
 
-	/* Codec ID should be specific */
-	if (count > 1) {
-		pj_assert(!"Codec ID is not specific");
-		return PJ_ETOOMANY;
-	}
+	if (count != 1)
+		return (count > 1? PJ_ETOOMANY : PJ_ENOTFOUND);
 
 	status = pjmedia_vid_codec_mgr_set_default_param(NULL, info[0], param);
 	return status;
@@ -686,67 +706,385 @@ static void dec_vid_win(pjsua_vid_win_id wid)
 }
 
 
+/* Initialize video call media */
+pj_status_t pjsua_vid_channel_init(pjsua_call_media *call_med)
+{
+	pjsua_acc *acc = &pjsua_var.acc[call_med->call->acc_id];
+
+	call_med->strm.v.rdr_dev = acc->cfg.vid_rend_dev;
+	call_med->strm.v.cap_dev = acc->cfg.vid_cap_dev;
+	if (call_med->strm.v.rdr_dev == PJMEDIA_VID_DEFAULT_RENDER_DEV) {
+		pjmedia_vid_dev_info info;
+		pjmedia_vid_dev_get_info(call_med->strm.v.rdr_dev, &info);
+		call_med->strm.v.rdr_dev = info.id;
+	}
+	if (call_med->strm.v.cap_dev == PJMEDIA_VID_DEFAULT_CAPTURE_DEV) {
+		pjmedia_vid_dev_info info;
+		pjmedia_vid_dev_get_info(call_med->strm.v.cap_dev, &info);
+		call_med->strm.v.cap_dev = info.id;
+	}
+
+	return PJ_SUCCESS;
+}
+
+// POPOV: delete this code
+///////////////* Internal function: update video channel after SDP negotiation */
+//////////////pj_status_t video_channel_update(pjsua_call_media *call_med,
+//////////////																 pj_pool_t *tmp_pool,
+//////////////																 const pjmedia_sdp_session *local_sdp,
+//////////////																 const pjmedia_sdp_session *remote_sdp)
+//////////////{
+//////////////	pjsua_call *call = call_med->call;
+//////////////	pjsua_acc  *acc  = &pjsua_var.acc[call->acc_id];
+//////////////	pjmedia_vid_stream_info the_si, *si = &the_si;
+//////////////	pjmedia_port *media_port;
+//////////////	unsigned strm_idx = call_med->idx;
+//////////////	pj_status_t status;
+//////////////
+//////////////	PJ_LOG(4,(THIS_FILE, "Video channel update.."));
+//////////////	pj_log_push_indent();
+//////////////
+//////////////	status = pjmedia_vid_stream_info_from_sdp(si, tmp_pool, pjsua_var.med_endpt,
+//////////////		local_sdp, remote_sdp, strm_idx);
+//////////////	if (status != PJ_SUCCESS)
+//////////////		goto on_error;
+//////////////
+//////////////	/* Check if no media is active */
+//////////////	if (si->dir == PJMEDIA_DIR_NONE)
+//////////////	{
+//////////////		/* Call media state */
+//////////////		call_med->state = PJSUA_CALL_MEDIA_NONE;
+//////////////
+//////////////		/* Call media direction */
+//////////////		call_med->dir = PJMEDIA_DIR_NONE;
+//////////////	}
+//////////////	else
+//////////////	{
+//////////////		pjmedia_transport_info tp_info;
+//////////////
+//////////////		/* Start/restart media transport */
+//////////////		status = pjmedia_transport_media_start(call_med->tp,
+//////////////			tmp_pool, local_sdp,
+//////////////			remote_sdp, strm_idx);
+//////////////		if (status != PJ_SUCCESS)
+//////////////			goto on_error;
+//////////////
+//////////////		set_media_tp_state(call_med, PJSUA_MED_TP_RUNNING);
+//////////////
+//////////////		/* Get remote SRTP usage policy */
+//////////////		pjmedia_transport_info_init(&tp_info);
+//////////////		pjmedia_transport_get_info(call_med->tp, &tp_info);
+//////////////		if (tp_info.specific_info_cnt > 0)
+//////////////		{
+//////////////			unsigned i;
+//////////////			for (i = 0; i < tp_info.specific_info_cnt; ++i)
+//////////////			{
+//////////////				if (tp_info.spc_info[i].type == PJMEDIA_TRANSPORT_TYPE_SRTP) 
+//////////////				{
+//////////////					pjmedia_srtp_info *srtp_info = (pjmedia_srtp_info*) tp_info.spc_info[i].buffer;
+//////////////
+//////////////					call_med->rem_srtp_use = srtp_info->peer_use;
+//////////////					break;
+//////////////				}
+//////////////			}
+//////////////		}
+//////////////
+//////////////		/* Optionally, application may modify other stream settings here
+//////////////		* (such as jitter buffer parameters, codec ptime, etc.)
+//////////////		*/
+//////////////		si->jb_init = pjsua_var.media_cfg.jb_init;
+//////////////		si->jb_min_pre = pjsua_var.media_cfg.jb_min_pre;
+//////////////		si->jb_max_pre = pjsua_var.media_cfg.jb_max_pre;
+//////////////		si->jb_max = pjsua_var.media_cfg.jb_max;
+//////////////
+//////////////		/* Set SSRC */
+//////////////		si->ssrc = call_med->ssrc;
+//////////////
+//////////////		/* Set RTP timestamp & sequence, normally these value are intialized
+//////////////		* automatically when stream session created, but for some cases (e.g:
+//////////////		* call reinvite, call update) timestamp and sequence need to be kept
+//////////////		* contigue.
+//////////////		*/
+//////////////		si->rtp_ts = call_med->rtp_tx_ts;
+//////////////		si->rtp_seq = call_med->rtp_tx_seq;
+//////////////		si->rtp_seq_ts_set = call_med->rtp_tx_seq_ts_set;
+//////////////
+//////////////#if defined(PJMEDIA_STREAM_ENABLE_KA) && PJMEDIA_STREAM_ENABLE_KA!=0
+//////////////		/* Enable/disable stream keep-alive and NAT hole punch. */
+//////////////		si->use_ka = pjsua_var.acc[call->acc_id].cfg.use_stream_ka;
+//////////////#endif
+//////////////
+//////////////		/* Try to get shared format ID between the capture device and 
+//////////////		* the encoder to avoid format conversion in the capture device.
+//////////////		*/
+//////////////		if (si->dir & PJMEDIA_DIR_ENCODING)
+//////////////		{
+//////////////			pjmedia_vid_dev_info dev_info;
+//////////////			pjmedia_vid_codec_info *codec_info = &si->codec_info;
+//////////////			unsigned i, j;
+//////////////
+//////////////			status = pjmedia_vid_dev_get_info(call_med->strm.v.cap_dev, &dev_info);
+//////////////			if (status != PJ_SUCCESS)
+//////////////				goto on_error;
+//////////////
+//////////////			/* Find matched format ID */
+//////////////			for (i = 0; i < codec_info->dec_fmt_id_cnt; ++i)
+//////////////			{
+//////////////				for (j = 0; j < dev_info.fmt_cnt; ++j)
+//////////////				{
+//////////////					if (codec_info->dec_fmt_id[i] == (pjmedia_format_id)dev_info.fmt[j].id)
+//////////////					{
+//////////////						/* Apply the matched format ID to the codec */
+//////////////						si->codec_param->dec_fmt.id = codec_info->dec_fmt_id[i];
+//////////////
+//////////////						/* Force outer loop to break */
+//////////////						i = codec_info->dec_fmt_id_cnt;
+//////////////						break;
+//////////////					}
+//////////////				}
+//////////////			}
+//////////////		}
+//////////////
+//////////////		/* Create session based on session info. */
+//////////////		status = pjmedia_vid_stream_create(pjsua_var.med_endpt, NULL, si, call_med->tp, NULL, &call_med->strm.v.stream);
+//////////////		if (status != PJ_SUCCESS)
+//////////////			goto on_error;
+//////////////
+//////////////		/* Start stream */
+//////////////		status = pjmedia_vid_stream_start(call_med->strm.v.stream);
+//////////////		if (status != PJ_SUCCESS)
+//////////////			goto on_error;
+//////////////
+//////////////		/* Setup decoding direction */
+//////////////		if (si->dir & PJMEDIA_DIR_DECODING)
+//////////////		{
+//////////////			pjsua_vid_win_id wid;
+//////////////			pjsua_vid_win *w;
+//////////////
+//////////////			PJ_LOG(4,(THIS_FILE, "Setting up RX.."));
+//////////////			pj_log_push_indent();
+//////////////
+//////////////			status = pjmedia_vid_stream_get_port(call_med->strm.v.stream, PJMEDIA_DIR_DECODING, &media_port);
+//////////////			if (status != PJ_SUCCESS)
+//////////////			{
+//////////////				pj_log_pop_indent();
+//////////////				goto on_error;
+//////////////			}
+//////////////
+//////////////			/* Create stream video window */
+//////////////			status = create_vid_win(PJSUA_WND_TYPE_STREAM,
+//////////////				&media_port->info.fmt,
+//////////////				call_med->strm.v.rdr_dev,
+//////////////				//acc->cfg.vid_rend_dev,
+//////////////				PJSUA_INVALID_ID,
+//////////////				acc->cfg.vid_in_auto_show,
+//////////////				acc->cfg.vid_wnd_flags,
+//////////////				&wid);
+//////////////			if (status != PJ_SUCCESS)
+//////////////			{
+//////////////				pj_log_pop_indent();
+//////////////				goto on_error;
+//////////////			}
+//////////////
+//////////////			w = &pjsua_var.win[wid];
+//////////////
+//////////////			pjmedia_vid_port_set_call_id(w->vp_rend, call_med->call->index);
+//////////////			//w->vp_rend->call_id = call_med->call->index;
+//////////////
+//////////////#if ENABLE_EVENT
+//////////////			/* Register to video events */
+//////////////			pjmedia_event_subscribe(NULL, &call_media_on_event, call_med, w->vp_rend);
+//////////////#endif
+//////////////
+//////////////
+//////////////			/* Connect renderer to stream */
+//////////////			status = pjmedia_vid_port_connect(w->vp_rend, media_port, PJ_FALSE);
+//////////////			if (status != PJ_SUCCESS)
+//////////////			{
+//////////////				pj_log_pop_indent();
+//////////////				goto on_error;
+//////////////			}
+//////////////
+//////////////			/* Start renderer */
+//////////////			status = pjmedia_vid_port_start(w->vp_rend);
+//////////////			if (status != PJ_SUCCESS)
+//////////////			{
+//////////////				pj_log_pop_indent();
+//////////////				goto on_error;
+//////////////			}
+//////////////
+//////////////			/* Done */
+//////////////			inc_vid_win(wid);
+//////////////			call_med->strm.v.rdr_win_id = wid;
+//////////////			pj_log_pop_indent();
+//////////////		}
+//////////////
+//////////////		/* Setup encoding direction */
+//////////////		if (si->dir & PJMEDIA_DIR_ENCODING && !call->local_hold)
+//////////////		{
+//////////////			pjsua_acc *acc = &pjsua_var.acc[call_med->call->acc_id];
+//////////////			pjsua_vid_win *w;
+//////////////			pjsua_vid_win_id wid;
+//////////////			pj_bool_t just_created = PJ_FALSE;
+//////////////
+//////////////			PJ_LOG(4,(THIS_FILE, "Setting up TX.."));
+//////////////			pj_log_push_indent();
+//////////////
+//////////////			status = pjmedia_vid_stream_get_port(call_med->strm.v.stream, PJMEDIA_DIR_ENCODING, &media_port);
+//////////////			if (status != PJ_SUCCESS)
+//////////////			{
+//////////////				pj_log_pop_indent();
+//////////////				goto on_error;
+//////////////			}
+//////////////
+//////////////			/* Note: calling pjsua_vid_preview_get_win() even though
+//////////////			* create_vid_win() will automatically create the window
+//////////////			* if it doesn't exist, because create_vid_win() will modify
+//////////////			* existing window SHOW/HIDE value.
+//////////////			*/
+//////////////			wid = vid_preview_get_win(call_med->strm.v.cap_dev, PJ_FALSE);
+//////////////			if (wid == PJSUA_INVALID_ID)
+//////////////			{
+//////////////				/* Create preview video window */
+//////////////				status = create_vid_win(PJSUA_WND_TYPE_PREVIEW,
+//////////////					&media_port->info.fmt,
+//////////////					call_med->strm.v.rdr_dev,
+//////////////					call_med->strm.v.cap_dev,
+//////////////					//acc->cfg.vid_rend_dev,
+//////////////					//acc->cfg.vid_cap_dev,
+//////////////					PJSUA_HIDE_WINDOW,
+//////////////					acc->cfg.vid_wnd_flags,
+//////////////					&wid);
+//////////////				if (status != PJ_SUCCESS)
+//////////////				{
+//////////////					pj_log_pop_indent();
+//////////////					return status;
+//////////////				}
+//////////////				just_created = PJ_TRUE;
+//////////////			}
+//////////////
+//////////////			w = &pjsua_var.win[wid];
+//////////////
+//////////////			pjmedia_vid_port_set_call_id(w->vp_cap, call_med->call->index);
+//////////////
+//////////////#if ENABLE_EVENT
+//////////////			pjmedia_event_subscribe(NULL, &call_media_on_event, call_med, w->vp_cap);
+//////////////#endif
+//////////////
+//////////////			/* Connect stream to capturer (via video window tee) */
+//////////////			status = pjmedia_vid_tee_add_dst_port2(w->tee, 0, media_port);
+//////////////			if (status != PJ_SUCCESS)
+//////////////			{
+//////////////				pj_log_pop_indent();
+//////////////				goto on_error;
+//////////////			}
+//////////////
+//////////////			/* Start capturer */
+//////////////			if (just_created)
+//////////////			{
+//////////////				status = pjmedia_vid_port_start(w->vp_cap);
+//////////////				if (status != PJ_SUCCESS)
+//////////////				{
+//////////////					pj_log_pop_indent();
+//////////////					goto on_error;
+//////////////				}
+//////////////			}
+//////////////
+//////////////			/* Done */
+//////////////			inc_vid_win(wid);
+//////////////			call_med->strm.v.cap_win_id = wid;
+//////////////			pj_log_pop_indent();
+//////////////		}
+//////////////
+//////////////		/* Call media direction */
+//////////////		call_med->dir = si->dir;
+//////////////
+//////////////		/* Call media state */
+//////////////		if (call->local_hold)
+//////////////			call_med->state = PJSUA_CALL_MEDIA_LOCAL_HOLD;
+//////////////		else if (call_med->dir == PJMEDIA_DIR_DECODING)
+//////////////			call_med->state = PJSUA_CALL_MEDIA_REMOTE_HOLD;
+//////////////		else
+//////////////			call_med->state = PJSUA_CALL_MEDIA_ACTIVE;
+//////////////	}
+//////////////
+//////////////	/* Print info. */
+//////////////	{
+//////////////		char info[80];
+//////////////		int info_len = 0;
+//////////////		int len;
+//////////////		const char *dir;
+//////////////
+//////////////		switch (si->dir)
+//////////////		{
+//////////////	case PJMEDIA_DIR_NONE:
+//////////////		dir = "inactive";
+//////////////		break;
+//////////////	case PJMEDIA_DIR_ENCODING:
+//////////////		dir = "sendonly";
+//////////////		break;
+//////////////	case PJMEDIA_DIR_DECODING:
+//////////////		dir = "recvonly";
+//////////////		break;
+//////////////	case PJMEDIA_DIR_ENCODING_DECODING:
+//////////////		dir = "sendrecv";
+//////////////		break;
+//////////////	default:
+//////////////		dir = "unknown";
+//////////////		break;
+//////////////		}
+//////////////		len = pj_ansi_sprintf( info+info_len,
+//////////////			", stream #%d: %.*s (%s)", strm_idx,
+//////////////			(int)si->codec_info.encoding_name.slen,
+//////////////			si->codec_info.encoding_name.ptr,
+//////////////			dir);
+//////////////		if (len > 0)
+//////////////			info_len += len;
+//////////////		PJ_LOG(4,(THIS_FILE,"Video updated%s", info));
+//////////////	}
+//////////////
+//////////////	if (!acc->cfg.vid_out_auto_transmit && call_med->strm.v.stream) {
+//////////////		status = pjmedia_vid_stream_pause(call_med->strm.v.stream,
+//////////////			PJMEDIA_DIR_ENCODING);
+//////////////		if (status != PJ_SUCCESS)
+//////////////			goto on_error;
+//////////////	}
+//////////////
+//////////////	pj_log_pop_indent();
+//////////////	return PJ_SUCCESS;
+//////////////
+//////////////on_error:
+//////////////	pj_log_pop_indent();
+//////////////	return status;
+//////////////}
+
+
+
+
+
 /* Internal function: update video channel after SDP negotiation */
-pj_status_t video_channel_update(pjsua_call_media *call_med,
-																 pj_pool_t *tmp_pool,
-																 const pjmedia_sdp_session *local_sdp,
-																 const pjmedia_sdp_session *remote_sdp)
+pj_status_t pjsua_vid_channel_update(pjsua_call_media *call_med,
+																		 pj_pool_t *tmp_pool,
+																		 pjmedia_vid_stream_info *si,
+																		 const pjmedia_sdp_session *local_sdp,
+																		 const pjmedia_sdp_session *remote_sdp)
 {
 	pjsua_call *call = call_med->call;
 	pjsua_acc  *acc  = &pjsua_var.acc[call->acc_id];
-	pjmedia_vid_stream_info the_si, *si = &the_si;
 	pjmedia_port *media_port;
-	unsigned strm_idx = call_med->idx;
 	pj_status_t status;
+
+	PJ_UNUSED_ARG(tmp_pool);
+	PJ_UNUSED_ARG(local_sdp);
+	PJ_UNUSED_ARG(remote_sdp);
 
 	PJ_LOG(4,(THIS_FILE, "Video channel update.."));
 	pj_log_push_indent();
 
-	status = pjmedia_vid_stream_info_from_sdp(si, tmp_pool, pjsua_var.med_endpt,
-		local_sdp, remote_sdp, strm_idx);
-	if (status != PJ_SUCCESS)
-		goto on_error;
+	si->rtcp_sdes_bye_disabled = PJ_TRUE;
 
 	/* Check if no media is active */
-	if (si->dir == PJMEDIA_DIR_NONE)
-	{
-		/* Call media state */
-		call_med->state = PJSUA_CALL_MEDIA_NONE;
-
-		/* Call media direction */
-		call_med->dir = PJMEDIA_DIR_NONE;
-	}
-	else
-	{
-		pjmedia_transport_info tp_info;
-
-		/* Start/restart media transport */
-		status = pjmedia_transport_media_start(call_med->tp,
-			tmp_pool, local_sdp,
-			remote_sdp, strm_idx);
-		if (status != PJ_SUCCESS)
-			goto on_error;
-
-		set_media_tp_state(call_med, PJSUA_MED_TP_RUNNING);
-
-		/* Get remote SRTP usage policy */
-		pjmedia_transport_info_init(&tp_info);
-		pjmedia_transport_get_info(call_med->tp, &tp_info);
-		if (tp_info.specific_info_cnt > 0)
-		{
-			unsigned i;
-			for (i = 0; i < tp_info.specific_info_cnt; ++i)
-			{
-				if (tp_info.spc_info[i].type == PJMEDIA_TRANSPORT_TYPE_SRTP) 
-				{
-					pjmedia_srtp_info *srtp_info = (pjmedia_srtp_info*) tp_info.spc_info[i].buffer;
-
-					call_med->rem_srtp_use = srtp_info->peer_use;
-					break;
-				}
-			}
-		}
-
+	if (si->dir != PJMEDIA_DIR_NONE) {
 		/* Optionally, application may modify other stream settings here
 		* (such as jitter buffer parameters, codec ptime, etc.)
 		*/
@@ -767,6 +1105,10 @@ pj_status_t video_channel_update(pjsua_call_media *call_med,
 		si->rtp_seq = call_med->rtp_tx_seq;
 		si->rtp_seq_ts_set = call_med->rtp_tx_seq_ts_set;
 
+		/* Set rate control config from account setting */
+		si->rc_cfg = acc->cfg.vid_stream_rc_cfg;
+
+
 #if defined(PJMEDIA_STREAM_ENABLE_KA) && PJMEDIA_STREAM_ENABLE_KA!=0
 		/* Enable/disable stream keep-alive and NAT hole punch. */
 		si->use_ka = pjsua_var.acc[call->acc_id].cfg.use_stream_ka;
@@ -775,25 +1117,25 @@ pj_status_t video_channel_update(pjsua_call_media *call_med,
 		/* Try to get shared format ID between the capture device and 
 		* the encoder to avoid format conversion in the capture device.
 		*/
-		if (si->dir & PJMEDIA_DIR_ENCODING)
-		{
+		if (si->dir & PJMEDIA_DIR_ENCODING) {
 			pjmedia_vid_dev_info dev_info;
 			pjmedia_vid_codec_info *codec_info = &si->codec_info;
 			unsigned i, j;
 
-			status = pjmedia_vid_dev_get_info(call_med->strm.v.cap_dev, &dev_info);
+			status = pjmedia_vid_dev_get_info(call_med->strm.v.cap_dev,
+				&dev_info);
 			if (status != PJ_SUCCESS)
 				goto on_error;
 
 			/* Find matched format ID */
-			for (i = 0; i < codec_info->dec_fmt_id_cnt; ++i)
-			{
-				for (j = 0; j < dev_info.fmt_cnt; ++j)
-				{
-					if (codec_info->dec_fmt_id[i] == (pjmedia_format_id)dev_info.fmt[j].id)
+			for (i = 0; i < codec_info->dec_fmt_id_cnt; ++i) {
+				for (j = 0; j < dev_info.fmt_cnt; ++j) {
+					if (codec_info->dec_fmt_id[i] == 
+						(pjmedia_format_id)dev_info.fmt[j].id)
 					{
 						/* Apply the matched format ID to the codec */
-						si->codec_param->dec_fmt.id = codec_info->dec_fmt_id[i];
+						si->codec_param->dec_fmt.id = 
+							codec_info->dec_fmt_id[i];
 
 						/* Force outer loop to break */
 						i = codec_info->dec_fmt_id_cnt;
@@ -804,7 +1146,9 @@ pj_status_t video_channel_update(pjsua_call_media *call_med,
 		}
 
 		/* Create session based on session info. */
-		status = pjmedia_vid_stream_create(pjsua_var.med_endpt, NULL, si, call_med->tp, NULL, &call_med->strm.v.stream);
+		status = pjmedia_vid_stream_create(pjsua_var.med_endpt, NULL, si,
+			call_med->tp, NULL,
+			&call_med->strm.v.stream);
 		if (status != PJ_SUCCESS)
 			goto on_error;
 
@@ -822,9 +1166,10 @@ pj_status_t video_channel_update(pjsua_call_media *call_med,
 			PJ_LOG(4,(THIS_FILE, "Setting up RX.."));
 			pj_log_push_indent();
 
-			status = pjmedia_vid_stream_get_port(call_med->strm.v.stream, PJMEDIA_DIR_DECODING, &media_port);
-			if (status != PJ_SUCCESS)
-			{
+			status = pjmedia_vid_stream_get_port(call_med->strm.v.stream,
+				PJMEDIA_DIR_DECODING,
+				&media_port);
+			if (status != PJ_SUCCESS) {
 				pj_log_pop_indent();
 				goto on_error;
 			}
@@ -838,35 +1183,32 @@ pj_status_t video_channel_update(pjsua_call_media *call_med,
 				acc->cfg.vid_in_auto_show,
 				acc->cfg.vid_wnd_flags,
 				&wid);
-			if (status != PJ_SUCCESS)
-			{
+			if (status != PJ_SUCCESS) {
 				pj_log_pop_indent();
 				goto on_error;
 			}
 
 			w = &pjsua_var.win[wid];
 
-			pjmedia_vid_port_set_call_id(w->vp_rend, call_med->call->index);
-			//w->vp_rend->call_id = call_med->call->index;
+			pjmedia_vid_port_set_call_id(w->vp_rend, call_med->call->index); // POPOV: setting call_id for render device
 
 #if ENABLE_EVENT
 			/* Register to video events */
-			pjmedia_event_subscribe(NULL, &call_media_on_event, call_med, w->vp_rend);
+			pjmedia_event_subscribe(NULL, &call_media_on_event,
+				call_med, w->vp_rend);
 #endif
 
-
 			/* Connect renderer to stream */
-			status = pjmedia_vid_port_connect(w->vp_rend, media_port, PJ_FALSE);
-			if (status != PJ_SUCCESS)
-			{
+			status = pjmedia_vid_port_connect(w->vp_rend, media_port,
+				PJ_FALSE);
+			if (status != PJ_SUCCESS) {
 				pj_log_pop_indent();
 				goto on_error;
 			}
 
 			/* Start renderer */
 			status = pjmedia_vid_port_start(w->vp_rend);
-			if (status != PJ_SUCCESS)
-			{
+			if (status != PJ_SUCCESS) {
 				pj_log_pop_indent();
 				goto on_error;
 			}
@@ -888,9 +1230,10 @@ pj_status_t video_channel_update(pjsua_call_media *call_med,
 			PJ_LOG(4,(THIS_FILE, "Setting up TX.."));
 			pj_log_push_indent();
 
-			status = pjmedia_vid_stream_get_port(call_med->strm.v.stream, PJMEDIA_DIR_ENCODING, &media_port);
-			if (status != PJ_SUCCESS)
-			{
+			status = pjmedia_vid_stream_get_port(call_med->strm.v.stream,
+				PJMEDIA_DIR_ENCODING,
+				&media_port);
+			if (status != PJ_SUCCESS) {
 				pj_log_pop_indent();
 				goto on_error;
 			}
@@ -901,8 +1244,7 @@ pj_status_t video_channel_update(pjsua_call_media *call_med,
 			* existing window SHOW/HIDE value.
 			*/
 			wid = vid_preview_get_win(call_med->strm.v.cap_dev, PJ_FALSE);
-			if (wid == PJSUA_INVALID_ID)
-			{
+			if (wid == PJSUA_INVALID_ID) {
 				/* Create preview video window */
 				status = create_vid_win(PJSUA_WND_TYPE_PREVIEW,
 					&media_port->info.fmt,
@@ -913,8 +1255,7 @@ pj_status_t video_channel_update(pjsua_call_media *call_med,
 					PJSUA_HIDE_WINDOW,
 					acc->cfg.vid_wnd_flags,
 					&wid);
-				if (status != PJ_SUCCESS)
-				{
+				if (status != PJ_SUCCESS) {
 					pj_log_pop_indent();
 					return status;
 				}
@@ -922,26 +1263,37 @@ pj_status_t video_channel_update(pjsua_call_media *call_med,
 			}
 
 			w = &pjsua_var.win[wid];
+
+			pjmedia_vid_port_set_call_id(w->vp_cap, call_med->call->index);
+
 #if ENABLE_EVENT
-			pjmedia_event_subscribe(NULL, &call_media_on_event, call_med, w->vp_cap);
+			pjmedia_event_subscribe(NULL, &call_media_on_event,
+				call_med, w->vp_cap);
 #endif
 
 			/* Connect stream to capturer (via video window tee) */
 			status = pjmedia_vid_tee_add_dst_port2(w->tee, 0, media_port);
-			if (status != PJ_SUCCESS)
-			{
+			if (status != PJ_SUCCESS) {
 				pj_log_pop_indent();
 				goto on_error;
 			}
 
 			/* Start capturer */
-			if (just_created)
-			{
+			if (just_created) {
 				status = pjmedia_vid_port_start(w->vp_cap);
-				if (status != PJ_SUCCESS)
-				{
+				if (status != PJ_SUCCESS) {
 					pj_log_pop_indent();
 					goto on_error;
+				}
+
+				if (!acc->cfg.vid_out_auto_transmit)
+				{
+					// POPOV: pause video capturing to camera off on start
+					status = pjmedia_vid_port_pause(w->vp_cap);
+					if (status != PJ_SUCCESS) {
+						pj_log_pop_indent();
+						goto on_error;
+					}
 				}
 			}
 
@@ -951,54 +1303,11 @@ pj_status_t video_channel_update(pjsua_call_media *call_med,
 			pj_log_pop_indent();
 		}
 
-		/* Call media direction */
-		call_med->dir = si->dir;
-
-		/* Call media state */
-		if (call->local_hold)
-			call_med->state = PJSUA_CALL_MEDIA_LOCAL_HOLD;
-		else if (call_med->dir == PJMEDIA_DIR_DECODING)
-			call_med->state = PJSUA_CALL_MEDIA_REMOTE_HOLD;
-		else
-			call_med->state = PJSUA_CALL_MEDIA_ACTIVE;
-	}
-
-	/* Print info. */
-	{
-		char info[80];
-		int info_len = 0;
-		int len;
-		const char *dir;
-
-		switch (si->dir)
-		{
-	case PJMEDIA_DIR_NONE:
-		dir = "inactive";
-		break;
-	case PJMEDIA_DIR_ENCODING:
-		dir = "sendonly";
-		break;
-	case PJMEDIA_DIR_DECODING:
-		dir = "recvonly";
-		break;
-	case PJMEDIA_DIR_ENCODING_DECODING:
-		dir = "sendrecv";
-		break;
-	default:
-		dir = "unknown";
-		break;
-		}
-		len = pj_ansi_sprintf( info+info_len,
-			", stream #%d: %.*s (%s)", strm_idx,
-			(int)si->codec_info.encoding_name.slen,
-			si->codec_info.encoding_name.ptr,
-			dir);
-		if (len > 0)
-			info_len += len;
-		PJ_LOG(4,(THIS_FILE,"Video updated%s", info));
 	}
 
 	if (!acc->cfg.vid_out_auto_transmit && call_med->strm.v.stream) {
+
+
 		status = pjmedia_vid_stream_pause(call_med->strm.v.stream,
 			PJMEDIA_DIR_ENCODING);
 		if (status != PJ_SUCCESS)
@@ -1014,8 +1323,9 @@ on_error:
 }
 
 
+
 /* Internal function to stop video stream */
-void stop_video_stream(pjsua_call_media *call_med)
+void pjsua_vid_stop_stream(pjsua_call_media *call_med)
 {
 	pjmedia_vid_stream *strm = call_med->strm.v.stream;
 	pjmedia_rtcp_stat stat;
@@ -1616,7 +1926,7 @@ static pj_status_t call_add_video(pjsua_call *call,
 	if (status != PJ_SUCCESS)
 		goto on_error;
 
-	set_media_tp_state(call_med, PJSUA_MED_TP_INIT);
+	pjsua_set_media_tp_state(call_med, PJSUA_MED_TP_INIT);
 
 	/* Get transport address info */
 	pjmedia_transport_info_init(&tpinfo);
@@ -1811,7 +2121,7 @@ on_error:
 		/* Mark media transport to disabled */
 		// Don't close this here, as SDP negotiation has not been
 		// done and stream may be still active.
-		set_media_tp_state(call_med, PJSUA_MED_TP_DISABLED);
+		pjsua_set_media_tp_state(call_med, PJSUA_MED_TP_DISABLED);
 
 		/* Deactivate the stream */
 		pjmedia_sdp_media_deactivate(pool, sdp->media[med_idx]);
@@ -2133,10 +2443,28 @@ PJ_DEF(pj_status_t) pjsua_call_set_vid_strm (
 			status = call_change_cap_dev(call, param_.med_idx, param_.cap_dev);
 			break;
 		case PJSUA_CALL_VID_STRM_START_TRANSMIT:
+			{// POPOV: pjsua_call_set_vid_strm: PJSUA_CALL_VID_STRM_START_TRANSMIT start videoport for camera on
+				pjsua_vid_win *w;
+				pjsua_call_media *call_med;
+				int med_idx = -1;
+				med_idx = pjsua_call_get_vid_stream_idx(call_id);
+				call_med = &call->media[med_idx];
+				w = &pjsua_var.win[call_med->strm.v.cap_win_id];
+				status = pjmedia_vid_port_start(w->vp_cap);
+			}
 			status = call_set_tx_video(call, param_.med_idx, PJ_TRUE);
 			break;
 		case PJSUA_CALL_VID_STRM_STOP_TRANSMIT:
 			status = call_set_tx_video(call, param_.med_idx, PJ_FALSE);
+			{// POPOV: pjsua_call_set_vid_strm: PJSUA_CALL_VID_STRM_STOP_TRANSMIT pause videoport for camera off
+				pjsua_vid_win *w;
+				pjsua_call_media *call_med;
+				int med_idx = -1;
+				med_idx = pjsua_call_get_vid_stream_idx(call_id);
+				call_med = &call->media[med_idx];
+				w = &pjsua_var.win[call_med->strm.v.cap_win_id];
+				status = pjmedia_vid_port_pause(w->vp_cap);
+			}
 			break;
 		case PJSUA_CALL_VID_STRM_SEND_KEYFRAME:
 			status = call_send_vid_keyframe(call, param_.med_idx);
@@ -2212,3 +2540,4 @@ PJ_DEF(pj_bool_t) pjsua_call_vid_stream_is_running( pjsua_call_id call_id,
 
 #endif /* PJSUA_HAS_VIDEO */
 
+#endif /* PJSUA_MEDIA_HAS_PJMEDIA */
