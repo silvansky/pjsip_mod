@@ -2039,10 +2039,10 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|Windows Mobile 6 Standard SDK (ARMV4I)"
+			ConfigurationType="4"
 			InheritedPropertySheets="..\..\build\vs\pjproject-vs8-debug-static-defaults.vsprops;..\..\build\vs\pjproject-vs8-wm6-common-defaults.vsprops"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="1"
-			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -2061,9 +2061,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="_LIB;"
 				ExecutionBucket="7"
 				AdditionalIncludeDirectories="../include,../../pjmedia/include,../../pjlib-util/include,../../pjlib/include,../../pjnath/include"
+				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
 			<Tool
@@ -2105,10 +2105,10 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|Windows Mobile 6 Professional SDK (ARMV4I)"
+			ConfigurationType="4"
 			InheritedPropertySheets="..\..\build\vs\pjproject-vs8-debug-static-defaults.vsprops;..\..\build\vs\pjproject-vs8-wm6-common-defaults.vsprops"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="1"
-			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -2127,9 +2127,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="_LIB;"
 				ExecutionBucket="7"
 				AdditionalIncludeDirectories="../include,../../pjmedia/include,../../pjlib-util/include,../../pjlib/include,../../pjnath/include"
+				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
 			<Tool
@@ -2171,10 +2171,10 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Windows Mobile 6 Standard SDK (ARMV4I)"
+			ConfigurationType="4"
 			InheritedPropertySheets="..\..\build\vs\pjproject-vs8-release-dynamic-defaults.vsprops;..\..\build\vs\pjproject-vs8-wm6-release-defaults.vsprops"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="1"
-			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -2193,9 +2193,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="_LIB;"
 				ExecutionBucket="7"
 				AdditionalIncludeDirectories="../include,../../pjmedia/include,../../pjlib-util/include,../../pjlib/include,../../pjnath/include"
+				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
 			<Tool
@@ -2237,10 +2237,10 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Windows Mobile 6 Professional SDK (ARMV4I)"
+			ConfigurationType="4"
 			InheritedPropertySheets="..\..\build\vs\pjproject-vs8-release-dynamic-defaults.vsprops;..\..\build\vs\pjproject-vs8-wm6-release-defaults.vsprops"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="1"
-			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -2259,9 +2259,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="_LIB;"
 				ExecutionBucket="7"
 				AdditionalIncludeDirectories="../include,../../pjmedia/include,../../pjlib-util/include,../../pjlib/include,../../pjnath/include"
+				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
 			<Tool
@@ -2303,10 +2303,10 @@
 		</Configuration>
 		<Configuration
 			Name="Debug-Static|Windows Mobile 6 Standard SDK (ARMV4I)"
+			ConfigurationType="4"
 			InheritedPropertySheets="..\..\build\vs\pjproject-vs8-debug-static-defaults.vsprops;..\..\build\vs\pjproject-vs8-wm6-common-defaults.vsprops"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="1"
-			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -2325,9 +2325,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="_LIB;"
 				ExecutionBucket="7"
 				AdditionalIncludeDirectories="../include,../../pjmedia/include,../../pjlib-util/include,../../pjlib/include,../../pjnath/include"
+				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
 			<Tool
@@ -2369,10 +2369,10 @@
 		</Configuration>
 		<Configuration
 			Name="Debug-Static|Windows Mobile 6 Professional SDK (ARMV4I)"
+			ConfigurationType="4"
 			InheritedPropertySheets="..\..\build\vs\pjproject-vs8-debug-static-defaults.vsprops;..\..\build\vs\pjproject-vs8-wm6-common-defaults.vsprops"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="1"
-			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -2391,9 +2391,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="_LIB;"
 				ExecutionBucket="7"
 				AdditionalIncludeDirectories="../include,../../pjmedia/include,../../pjlib-util/include,../../pjlib/include,../../pjnath/include"
+				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
 			<Tool
@@ -2435,10 +2435,10 @@
 		</Configuration>
 		<Configuration
 			Name="Release-Dynamic|Windows Mobile 6 Standard SDK (ARMV4I)"
+			ConfigurationType="4"
 			InheritedPropertySheets="..\..\build\vs\pjproject-vs8-release-dynamic-defaults.vsprops;..\..\build\vs\pjproject-vs8-wm6-release-defaults.vsprops"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="1"
-			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -2457,9 +2457,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="_LIB;"
 				ExecutionBucket="7"
 				AdditionalIncludeDirectories="../include,../../pjmedia/include,../../pjlib-util/include,../../pjlib/include,../../pjnath/include"
+				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
 			<Tool
@@ -2501,10 +2501,10 @@
 		</Configuration>
 		<Configuration
 			Name="Release-Dynamic|Windows Mobile 6 Professional SDK (ARMV4I)"
+			ConfigurationType="4"
 			InheritedPropertySheets="..\..\build\vs\pjproject-vs8-release-dynamic-defaults.vsprops;..\..\build\vs\pjproject-vs8-wm6-release-defaults.vsprops"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="1"
-			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -2523,9 +2523,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="_LIB;"
 				ExecutionBucket="7"
 				AdditionalIncludeDirectories="../include,../../pjmedia/include,../../pjlib-util/include,../../pjlib/include,../../pjnath/include"
+				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
 			<Tool
@@ -2567,10 +2567,10 @@
 		</Configuration>
 		<Configuration
 			Name="Debug-Dynamic|Windows Mobile 6 Standard SDK (ARMV4I)"
+			ConfigurationType="4"
 			InheritedPropertySheets="..\..\build\vs\pjproject-vs8-debug-dynamic-defaults.vsprops;..\..\build\vs\pjproject-vs8-wm6-common-defaults.vsprops"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="1"
-			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -2589,9 +2589,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="_LIB;"
 				ExecutionBucket="7"
 				AdditionalIncludeDirectories="../include,../../pjmedia/include,../../pjlib-util/include,../../pjlib/include,../../pjnath/include"
+				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
 			<Tool
@@ -2633,10 +2633,10 @@
 		</Configuration>
 		<Configuration
 			Name="Debug-Dynamic|Windows Mobile 6 Professional SDK (ARMV4I)"
+			ConfigurationType="4"
 			InheritedPropertySheets="..\..\build\vs\pjproject-vs8-debug-dynamic-defaults.vsprops;..\..\build\vs\pjproject-vs8-wm6-common-defaults.vsprops"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="1"
-			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -2655,9 +2655,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="_LIB;"
 				ExecutionBucket="7"
 				AdditionalIncludeDirectories="../include,../../pjmedia/include,../../pjlib-util/include,../../pjlib/include,../../pjnath/include"
+				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
 			<Tool
@@ -2699,10 +2699,10 @@
 		</Configuration>
 		<Configuration
 			Name="Release-Static|Windows Mobile 6 Standard SDK (ARMV4I)"
+			ConfigurationType="4"
 			InheritedPropertySheets="..\..\build\vs\pjproject-vs8-release-static-defaults.vsprops;..\..\build\vs\pjproject-vs8-wm6-release-defaults.vsprops"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="1"
-			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -2721,9 +2721,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="_LIB;"
 				ExecutionBucket="7"
 				AdditionalIncludeDirectories="../include,../../pjmedia/include,../../pjlib-util/include,../../pjlib/include,../../pjnath/include"
+				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
 			<Tool
@@ -2765,10 +2765,10 @@
 		</Configuration>
 		<Configuration
 			Name="Release-Static|Windows Mobile 6 Professional SDK (ARMV4I)"
+			ConfigurationType="4"
 			InheritedPropertySheets="..\..\build\vs\pjproject-vs8-release-static-defaults.vsprops;..\..\build\vs\pjproject-vs8-wm6-release-defaults.vsprops"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="1"
-			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -2787,9 +2787,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="_LIB;"
 				ExecutionBucket="7"
 				AdditionalIncludeDirectories="../include,../../pjmedia/include,../../pjlib-util/include,../../pjlib/include,../../pjnath/include"
+				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
 			<Tool
@@ -2894,6 +2894,10 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\src\pjsua-lib\pjsua_aud.c"
+				>
 			</File>
 			<File
 				RelativePath="..\src\pjsua-lib\pjsua_call.c"

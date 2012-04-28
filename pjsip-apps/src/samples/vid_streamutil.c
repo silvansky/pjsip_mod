@@ -1,4 +1,4 @@
-/* $Id: vid_streamutil.c 3937 2012-01-06 11:30:40Z nanang $ */
+/* $Id: vid_streamutil.c 4055 2012-04-16 09:44:25Z nanang $ */
 /* 
  * Copyright (C) 2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -121,8 +121,8 @@ static pj_status_t init_codecs(pj_pool_factory *pf)
     /* To suppress warning about unused var when all codecs are disabled */
     PJ_UNUSED_ARG(status);
 
-#if defined(PJMEDIA_HAS_FFMPEG_CODEC) && PJMEDIA_HAS_FFMPEG_CODEC != 0
-    status = pjmedia_codec_ffmpeg_init(NULL, pf);
+#if defined(PJMEDIA_HAS_FFMPEG_VID_CODEC) && PJMEDIA_HAS_FFMPEG_VID_CODEC != 0
+    status = pjmedia_codec_ffmpeg_vid_init(NULL, pf);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, status);
 #endif
 
@@ -134,8 +134,8 @@ static pj_status_t init_codecs(pj_pool_factory *pf)
  */
 static void deinit_codecs()
 {
-#if defined(PJMEDIA_HAS_FFMPEG_CODEC) && PJMEDIA_HAS_FFMPEG_CODEC != 0
-    pjmedia_codec_ffmpeg_deinit();
+#if defined(PJMEDIA_HAS_FFMPEG_VID_CODEC) && PJMEDIA_HAS_FFMPEG_VID_CODEC != 0
+    pjmedia_codec_ffmpeg_vid_deinit();
 #endif
 }
 
@@ -816,6 +816,9 @@ int main(int argc, char *argv[])
 	vpp.vidparam.fmt.det.vid.size = play_port->info.fmt.det.vid.size;
 	vpp.vidparam.fmt.det.vid.fps = play_port->info.fmt.det.vid.fps;
         vpp.vidparam.disp_size = vpp.vidparam.fmt.det.vid.size;
+	vpp.vidparam.flags |= PJMEDIA_VID_DEV_CAP_OUTPUT_WINDOW_FLAGS;
+	vpp.vidparam.window_flags = PJMEDIA_VID_DEV_WND_BORDER |
+				    PJMEDIA_VID_DEV_WND_RESIZABLE;
 
 	status = pjmedia_vid_port_create(pool, &vpp, &renderer);
         if (status != PJ_SUCCESS)

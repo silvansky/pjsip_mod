@@ -1,4 +1,4 @@
-/* $Id: _pjsua.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: _pjsua.c 3999 2012-03-30 07:10:13Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -2347,7 +2347,7 @@ static PyObject *py_pjsua_conf_get_port_info(PyObject *pSelf, PyObject *pArgs)
     ret = (PyObj_pjsua_conf_port_info *)
 	  conf_port_info_new(&PyTyp_pjsua_conf_port_info, NULL, NULL);
     ret->bits_per_sample = info.bits_per_sample;
-    ret->channel_count = info.bits_per_sample;
+    ret->channel_count = info.channel_count;
     ret->clock_rate = info.clock_rate;
     ret->name = PyString_FromPJ(&info.name);
     ret->samples_per_frame = info.samples_per_frame;

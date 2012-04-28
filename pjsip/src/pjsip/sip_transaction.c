@@ -1,4 +1,4 @@
-/* $Id: sip_transaction.c 3841 2011-10-24 09:28:13Z ming $ */
+/* $Id: sip_transaction.c 4001 2012-03-30 07:53:36Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -714,23 +714,17 @@ static pj_status_t mod_tsx_layer_stop(void)
     }
 
     pj_mutex_unlock(mod_tsx_layer.mutex);
+
+    PJ_LOG(4,(THIS_FILE, "Stopped transaction layer module"));
+
     return PJ_SUCCESS;
 }
 
 
-/* This module callback is called when module is being unloaded by
- * endpoint.
- */
-static pj_status_t mod_tsx_layer_unload(void)
+/* Destroy this module */
+static void tsx_layer_destroy(pjsip_endpoint *endpt)
 {
-    /* Only self destroy when there's no transaction in the table.
-     * Transaction may refuse to destroy when it has pending
-     * transmission. If we destroy the module now, application will
-     * crash when the pending transaction finally got error response
-     * from transport and when it tries to unregister itself.
-     */
-    if (pj_hash_count(mod_tsx_layer.htable) != 0)
-	return PJ_EBUSY;
+    PJ_UNUSED_ARG(endpt);
 
     /* Destroy mutex. */
     pj_mutex_destroy(mod_tsx_layer.mutex);
@@ -745,6 +739,31 @@ static pj_status_t mod_tsx_layer_unload(void)
     mod_tsx_layer.endpt = NULL;
 
     PJ_LOG(4,(THIS_FILE, "Transaction layer module destroyed"));
+}
+
+
+/* This module callback is called when module is being unloaded by
+ * endpoint.
+ */
+static pj_status_t mod_tsx_layer_unload(void)
+{
+    /* Only self destroy when there's no transaction in the table.
+     * Transaction may refuse to destroy when it has pending
+     * transmission. If we destroy the module now, application will
+     * crash when the pending transaction finally got error response
+     * from transport and when it tries to unregister itself.
+     */
+    if (pj_hash_count(mod_tsx_layer.htable) != 0) {
+	if (pjsip_endpt_atexit(mod_tsx_layer.endpt, &tsx_layer_destroy) !=
+	    PJ_SUCCESS)
+	{
+	    PJ_LOG(3,(THIS_FILE, "Failed to register transaction layer "
+				 "module destroy."));
+	}
+	return PJ_EBUSY;
+    }
+
+    tsx_layer_destroy(mod_tsx_layer.endpt);
 
     return PJ_SUCCESS;
 }
@@ -3220,7 +3239,13 @@ static pj_status_t tsx_on_state_terminated( pjsip_transaction *tsx,
                                             pjsip_event *event)
 {
     pj_assert(tsx->state == PJSIP_TSX_STATE_TERMINATED);
-    pj_assert(event->type == PJSIP_EVENT_TIMER);
+
+    /* Ignore events other than timer. This used to be an assertion but
+     * events may genuinely arrive at this state.
+     */
+    if (event->type != PJSIP_EVENT_TIMER) {
+	return PJ_EIGNORED;
+    }
 
     /* Destroy this transaction */
     tsx_set_state(tsx, PJSIP_TSX_STATE_DESTROYED, 
@@ -3239,7 +3264,10 @@ static pj_status_t tsx_on_state_destroyed(pjsip_transaction *tsx,
 {
     PJ_UNUSED_ARG(tsx);
     PJ_UNUSED_ARG(event);
-    pj_assert(!"Not expecting any events!!");
-    return PJ_EBUG;
+
+    // See https://trac.pjsip.org/repos/ticket/1432
+    //pj_assert(!"Not expecting any events!!");
+
+    return PJ_EIGNORED;
 }
 

@@ -1,4 +1,4 @@
-/* $Id: sip_transport.c 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: sip_transport.c 4038 2012-04-11 10:01:00Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -857,7 +857,9 @@ PJ_DEF(pj_status_t) pjsip_transport_dec_ref( pjsip_transport *tp )
 	    if (tp->is_shutdown) {
 		delay.sec = delay.msec = 0;
 	    } else {
-		delay.sec = PJSIP_TRANSPORT_IDLE_TIME;
+		delay.sec = (tp->dir==PJSIP_TP_DIR_OUTGOING) ?
+				PJSIP_TRANSPORT_IDLE_TIME :
+				PJSIP_TRANSPORT_SERVER_IDLE_TIME;
 		delay.msec = 0;
 	    }
 

@@ -1,4 +1,4 @@
-/* $Id: sip_auth_client.c 3878 2011-10-31 10:31:23Z ming $ */
+/* $Id: sip_auth_client.c 3999 2012-03-30 07:10:13Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -1103,7 +1103,8 @@ PJ_DEF(pj_status_t) pjsip_auth_clt_reinit_req(	pjsip_auth_clt_sess *sess,
 		     PJSIP_EINVALIDSTATUS);
 
     tdata = old_request;
-    
+    tdata->auth_retry = PJ_FALSE;
+
     /*
      * Respond to each authentication challenge.
      */
@@ -1173,6 +1174,9 @@ PJ_DEF(pj_status_t) pjsip_auth_clt_reinit_req(	pjsip_auth_clt_sess *sess,
 
     /* Must invalidate the message! */
     pjsip_tx_data_invalidate_msg(tdata);
+
+    /* Retrying.. */
+    tdata->auth_retry = PJ_TRUE;
 
     /* Increment reference counter. */
     pjsip_tx_data_add_ref(tdata);

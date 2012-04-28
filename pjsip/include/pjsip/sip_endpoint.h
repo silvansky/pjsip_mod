@@ -1,4 +1,4 @@
-/* $Id: sip_endpoint.h 3841 2011-10-24 09:28:13Z ming $ */
+/* $Id: sip_endpoint.h 3999 2012-03-30 07:10:13Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -61,6 +61,13 @@ PJ_BEGIN_DECL
  *
  * @{
  */
+
+
+/**
+ * Type of callback to register to pjsip_endpt_atexit().
+ */
+typedef void (*pjsip_endpt_exit_callback)(pjsip_endpoint *endpt);
+
 
 /**
  * Create an instance of SIP endpoint from the specified pool factory.
@@ -510,6 +517,21 @@ PJ_DECL(const pjsip_hdr*) pjsip_endpt_get_request_headers(pjsip_endpoint *e);
  */
 PJ_DECL(void) pjsip_endpt_dump( pjsip_endpoint *endpt, pj_bool_t detail );
 
+
+/**
+ * Register cleanup function to be called by SIP endpoint when 
+ * #pjsip_endpt_destroy() is called.  Note that application should not
+ * use or access any endpoint resource (such as pool, ioqueue, timer heap)
+ * from within the callback as such resource may have been released when
+ * the callback function is invoked.
+ *
+ * @param endpt		The SIP endpoint.
+ * @param func		The function to be registered.
+ *
+ * @return		PJ_SUCCESS on success.
+ */
+PJ_DECL(pj_status_t) pjsip_endpt_atexit(pjsip_endpoint *endpt,
+					pjsip_endpt_exit_callback func);
 
 
 /**

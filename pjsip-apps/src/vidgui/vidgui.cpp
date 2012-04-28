@@ -323,6 +323,9 @@ void MainWin::hangup()
 	//pjsua_call_hangup(currentCall_, PJSIP_SC_BUSY_HERE, NULL, NULL);
 	pjsua_call_hangup_all();
 	emit signalCallReleased();
+
+	pjsua_acc_set_registration(0, false);
+	
 }
 
 

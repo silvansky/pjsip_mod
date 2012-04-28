@@ -1,4 +1,4 @@
-/* $Id: pjsua_app.c 3971 2012-03-09 03:03:10Z nanang $ */
+/* $Id: pjsua_app.c 4027 2012-04-05 08:38:49Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -43,6 +43,7 @@
 #define RING_CNT	    3
 #define RING_INTERVAL	    3000
 
+#define MAX_AVI             4
 
 /* Call specific data */
 struct call_data
@@ -135,6 +136,17 @@ static struct app_config
 
     struct app_vid	    vid;
     unsigned		    aud_cnt;
+
+    /* AVI to play */
+    unsigned                avi_cnt;
+    struct {
+	pj_str_t		path;
+	pjmedia_vid_dev_index	dev_id;
+	pjsua_conf_port_id	slot;
+    } avi[MAX_AVI];
+    pj_bool_t               avi_auto_play;
+    int			    avi_def_idx;
+
 } app_config;
 
 
@@ -269,6 +281,8 @@ static void usage(void)
     puts  ("                      May be specified multiple times");
     puts  ("  --stun-srv=FORMAT   Set STUN server host or domain. This option may be");
     puts  ("                      specified more than once. FORMAT is hostdom[:PORT]");
+
+#if defined(PJSIP_HAS_TLS_TRANSPORT) && (PJSIP_HAS_TLS_TRANSPORT != 0)
     puts  ("");
     puts  ("TLS Options:");
     puts  ("  --use-tls           Enable TLS transport (default=no)");
@@ -280,6 +294,9 @@ static void usage(void)
     puts  ("  --tls-verify-client Verify client's certificate (default=no)");
     puts  ("  --tls-neg-timeout   Specify TLS negotiation timeout (default=no)");
     puts  ("  --tls-srv-name      Specify TLS server name for multihosting server");
+    puts  ("  --tls-cipher        Specify prefered TLS cipher (optional).");
+    puts  ("                      May be specified multiple times");
+#endif
 
     puts  ("");
     puts  ("Audio Options:");
@@ -324,6 +341,8 @@ static void usage(void)
     puts  ("  --video             Enable video");
     puts  ("  --vcapture-dev=id   Video capture device ID (default=-1)");
     puts  ("  --vrender-dev=id    Video render device ID (default=-1)");
+    puts  ("  --play-avi=FILE     Load this AVI as virtual capture device");
+    puts  ("  --auto-play-avi     Automatically play the AVI media to call");
 #endif
 
     puts  ("");
@@ -404,6 +423,8 @@ static void default_config(struct app_config *cfg)
     cfg->vid.vcapture_dev = PJMEDIA_VID_DEFAULT_CAPTURE_DEV;
     cfg->vid.vrender_dev = PJMEDIA_VID_DEFAULT_RENDER_DEV;
     cfg->aud_cnt = 1;
+
+    cfg->avi_def_idx = PJSUA_INVALID_ID;
 }
 
 
@@ -560,7 +581,7 @@ static pj_status_t parse_args(int argc, char *argv[],
 	   OPT_NOREFERSUB, OPT_ACCEPT_REDIRECT,
 	   OPT_USE_TLS, OPT_TLS_CA_FILE, OPT_TLS_CERT_FILE, OPT_TLS_PRIV_FILE,
 	   OPT_TLS_PASSWORD, OPT_TLS_VERIFY_SERVER, OPT_TLS_VERIFY_CLIENT,
-	   OPT_TLS_NEG_TIMEOUT, OPT_TLS_SRV_NAME,
+	   OPT_TLS_NEG_TIMEOUT, OPT_TLS_CIPHER,
 	   OPT_CAPTURE_DEV, OPT_PLAYBACK_DEV,
 	   OPT_CAPTURE_LAT, OPT_PLAYBACK_LAT, OPT_NO_TONES, OPT_JB_MAX_SIZE,
 	   OPT_STDOUT_REFRESH, OPT_STDOUT_REFRESH_TEXT, OPT_IPV6, OPT_QOS,
@@ -571,7 +592,7 @@ static pj_status_t parse_args(int argc, char *argv[],
 	   OPT_NO_FORCE_LR,
 	   OPT_TIMER, OPT_TIMER_SE, OPT_TIMER_MIN_SE,
 	   OPT_VIDEO, OPT_EXTRA_AUDIO,
-	   OPT_VCAPTURE_DEV, OPT_VRENDER_DEV,
+	   OPT_VCAPTURE_DEV, OPT_VRENDER_DEV, OPT_PLAY_AVI, OPT_AUTO_PLAY_AVI
     };
     struct pj_getopt_option long_options[] = {
 	{ "config-file",1, 0, OPT_CONFIG_FILE},
@@ -662,6 +683,7 @@ static pj_status_t parse_args(int argc, char *argv[],
 	{ "max-calls",	1, 0, OPT_MAX_CALLS},
 	{ "duration",	1, 0, OPT_DURATION},
 	{ "thread-cnt",	1, 0, OPT_THREAD_CNT},
+#if defined(PJSIP_HAS_TLS_TRANSPORT) && (PJSIP_HAS_TLS_TRANSPORT != 0)
 	{ "use-tls",	0, 0, OPT_USE_TLS}, 
 	{ "tls-ca-file",1, 0, OPT_TLS_CA_FILE},
 	{ "tls-cert-file",1,0, OPT_TLS_CERT_FILE}, 
@@ -670,7 +692,8 @@ static pj_status_t parse_args(int argc, char *argv[],
 	{ "tls-verify-server", 0, 0, OPT_TLS_VERIFY_SERVER},
 	{ "tls-verify-client", 0, 0, OPT_TLS_VERIFY_CLIENT},
 	{ "tls-neg-timeout", 1, 0, OPT_TLS_NEG_TIMEOUT},
-	{ "tls-srv-name", 1, 0, OPT_TLS_SRV_NAME},
+	{ "tls-cipher", 1, 0, OPT_TLS_CIPHER},
+#endif
 	{ "capture-dev",    1, 0, OPT_CAPTURE_DEV},
 	{ "playback-dev",   1, 0, OPT_PLAYBACK_DEV},
 	{ "capture-lat",    1, 0, OPT_CAPTURE_LAT},
@@ -695,6 +718,8 @@ static pj_status_t parse_args(int argc, char *argv[],
 	{ "extra-audio",0, 0, OPT_EXTRA_AUDIO},
 	{ "vcapture-dev", 1, 0, OPT_VCAPTURE_DEV},
 	{ "vrender-dev",  1, 0, OPT_VRENDER_DEV},
+	{ "play-avi",	1, 0, OPT_PLAY_AVI},
+	{ "auto-play-avi", 0, 0, OPT_AUTO_PLAY_AVI},
 	{ NULL, 0, 0, 0}
     };
     pj_status_t status;
@@ -1345,28 +1370,17 @@ static pj_status_t parse_args(int argc, char *argv[],
 	    }
 	    break;
 
+#if defined(PJSIP_HAS_TLS_TRANSPORT) && (PJSIP_HAS_TLS_TRANSPORT != 0)
 	case OPT_USE_TLS:
 	    cfg->use_tls = PJ_TRUE;
-#if !defined(PJSIP_HAS_TLS_TRANSPORT) || PJSIP_HAS_TLS_TRANSPORT==0
-	    PJ_LOG(1,(THIS_FILE, "Error: TLS support is not configured"));
-	    return -1;
-#endif
 	    break;
 	    
 	case OPT_TLS_CA_FILE:
 	    cfg->udp_cfg.tls_setting.ca_list_file = pj_str(pj_optarg);
-#if !defined(PJSIP_HAS_TLS_TRANSPORT) || PJSIP_HAS_TLS_TRANSPORT==0
-	    PJ_LOG(1,(THIS_FILE, "Error: TLS support is not configured"));
-	    return -1;
-#endif
 	    break;
 	    
 	case OPT_TLS_CERT_FILE:
 	    cfg->udp_cfg.tls_setting.cert_file = pj_str(pj_optarg);
-#if !defined(PJSIP_HAS_TLS_TRANSPORT) || PJSIP_HAS_TLS_TRANSPORT==0
-	    PJ_LOG(1,(THIS_FILE, "Error: TLS support is not configured"));
-	    return -1;
-#endif
 	    break;
 	    
 	case OPT_TLS_PRIV_FILE:
@@ -1375,10 +1389,6 @@ static pj_status_t parse_args(int argc, char *argv[],
 
 	case OPT_TLS_PASSWORD:
 	    cfg->udp_cfg.tls_setting.password = pj_str(pj_optarg);
-#if !defined(PJSIP_HAS_TLS_TRANSPORT) || PJSIP_HAS_TLS_TRANSPORT==0
-	    PJ_LOG(1,(THIS_FILE, "Error: TLS support is not configured"));
-	    return -1;
-#endif
 	    break;
 
 	case OPT_TLS_VERIFY_SERVER:
@@ -1394,16 +1404,46 @@ static pj_status_t parse_args(int argc, char *argv[],
 	    cfg->udp_cfg.tls_setting.timeout.sec = atoi(pj_optarg);
 	    break;
 
-	case OPT_TLS_SRV_NAME:
-	    cfg->udp_cfg.tls_setting.server_name = pj_str(pj_optarg);
-	    break;
+	case OPT_TLS_CIPHER:
+	    {
+		pj_ssl_cipher cipher;
+
+		if (pj_ansi_strnicmp(pj_optarg, "0x", 2) == 0) {
+		    pj_str_t cipher_st = pj_str(pj_optarg + 2);
+		    cipher = pj_strtoul2(&cipher_st, NULL, 16);
+		} else {
+		    cipher = atoi(pj_optarg);
+		}
+
+		if (pj_ssl_cipher_is_supported(cipher)) {
+		    static pj_ssl_cipher tls_ciphers[128];
+
+		    tls_ciphers[cfg->udp_cfg.tls_setting.ciphers_num++] = cipher;
+		    cfg->udp_cfg.tls_setting.ciphers = tls_ciphers;
+		} else {
+		    pj_ssl_cipher ciphers[128];
+		    unsigned j, ciphers_cnt;
+
+		    ciphers_cnt = PJ_ARRAY_SIZE(ciphers);
+		    pj_ssl_cipher_get_availables(ciphers, &ciphers_cnt);
+		    
+		    PJ_LOG(1,(THIS_FILE, "Cipher \"%s\" is not supported by "
+					 "TLS/SSL backend.", pj_optarg));
+		    printf("Available TLS/SSL ciphers (%d):\n", ciphers_cnt);
+		    for (j=0; j<ciphers_cnt; ++j)
+			printf("- 0x%06X: %s\n", ciphers[j], pj_ssl_cipher_name(ciphers[j]));
+		    return -1;
+		}
+	    }
+ 	    break;
+#endif /* PJSIP_HAS_TLS_TRANSPORT */
 
 	case OPT_CAPTURE_DEV:
-	    cfg->vid.vcapture_dev = atoi(pj_optarg);
+	    cfg->capture_dev = atoi(pj_optarg);
 	    break;
 
 	case OPT_PLAYBACK_DEV:
-	    cfg->vid.vrender_dev = atoi(pj_optarg);
+	    cfg->playback_dev = atoi(pj_optarg);
 	    break;
 
 	case OPT_STDOUT_REFRESH:
@@ -1473,6 +1513,18 @@ static pj_status_t parse_args(int argc, char *argv[],
 	case OPT_VRENDER_DEV:
 	    cfg->vid.vrender_dev = atoi(pj_optarg);
 	    cur_acc->vid_rend_dev = cfg->vid.vrender_dev;
+	    break;
+
+	case OPT_PLAY_AVI:
+	    if (app_config.avi_cnt >= MAX_AVI) {
+		PJ_LOG(1,(THIS_FILE, "Too many AVIs"));
+		return -1;
+	    }
+	    app_config.avi[app_config.avi_cnt++].path = pj_str(pj_optarg);
+	    break;
+
+	case OPT_AUTO_PLAY_AVI:
+	    app_config.avi_auto_play = PJ_TRUE;
 	    break;
 
 	default:
@@ -1834,6 +1886,7 @@ static int write_settings(const struct app_config *config,
 	pj_strcat2(&cfg, line);
     }
 
+#if defined(PJSIP_HAS_TLS_TRANSPORT) && (PJSIP_HAS_TLS_TRANSPORT != 0)
     /* TLS */
     if (config->use_tls)
 	pj_strcat2(&cfg, "--use-tls\n");
@@ -1863,13 +1916,6 @@ static int write_settings(const struct app_config *config,
 	pj_strcat2(&cfg, line);
     }
 
-    if (config->udp_cfg.tls_setting.server_name.slen) {
-	pj_ansi_sprintf(line, "--tls-srv-name %.*s\n",
-			(int)config->udp_cfg.tls_setting.server_name.slen, 
-			config->udp_cfg.tls_setting.server_name.ptr);
-	pj_strcat2(&cfg, line);
-    }
-
     if (config->udp_cfg.tls_setting.verify_server)
 	pj_strcat2(&cfg, "--tls-verify-server\n");
 
@@ -1881,6 +1927,14 @@ static int write_settings(const struct app_config *config,
 			(int)config->udp_cfg.tls_setting.timeout.sec);
 	pj_strcat2(&cfg, line);
     }
+
+    for (i=0; i<config->udp_cfg.tls_setting.ciphers_num; ++i) {
+	pj_ansi_sprintf(line, "--tls-cipher 0x%06X # %s\n",
+			config->udp_cfg.tls_setting.ciphers[i],
+			pj_ssl_cipher_name(config->udp_cfg.tls_setting.ciphers[i]));
+	pj_strcat2(&cfg, line);
+    }
+#endif
 
     pj_strcat2(&cfg, "\n#\n# Media settings:\n#\n");
 
@@ -2057,6 +2111,14 @@ static int write_settings(const struct app_config *config,
     }
     if (config->vid.vrender_dev != PJMEDIA_VID_DEFAULT_RENDER_DEV) {
 	pj_ansi_sprintf(line, "--vrender-dev %d\n", config->vid.vrender_dev);
+	pj_strcat2(&cfg, line);
+    }
+    for (i=0; i<config->avi_cnt; ++i) {
+	pj_ansi_sprintf(line, "--play-avi %s\n", config->avi[i].path.ptr);
+	pj_strcat2(&cfg, line);
+    }
+    if (config->avi_auto_play) {
+	pj_ansi_sprintf(line, "--auto-play-avi\n");
 	pj_strcat2(&cfg, line);
     }
 
@@ -2742,6 +2804,7 @@ static void on_call_audio_state(pjsua_call_info *ci, unsigned mi,
 	ci->media[mi].status == PJSUA_CALL_MEDIA_REMOTE_HOLD)
     {
 	pj_bool_t connect_sound = PJ_TRUE;
+	pj_bool_t disconnect_mic = PJ_FALSE;
 	pjsua_conf_port_id call_conf_slot;
 
 	call_conf_slot = ci->media[mi].stream.aud.conf_slot;
@@ -2763,6 +2826,16 @@ static void on_call_audio_state(pjsua_call_info *ci, unsigned mi,
 	{
 	    pjsua_conf_connect(app_config.wav_port, call_conf_slot);
 	    connect_sound = PJ_FALSE;
+	}
+
+	/* Stream AVI, if desired */
+	if (app_config.avi_auto_play &&
+	    app_config.avi_def_idx != PJSUA_INVALID_ID &&
+	    app_config.avi[app_config.avi_def_idx].slot != PJSUA_INVALID_ID)
+	{
+	    pjsua_conf_connect(app_config.avi[app_config.avi_def_idx].slot,
+			       call_conf_slot);
+	    disconnect_mic = PJ_TRUE;
 	}
 
 	/* Put call in conference with other calls, if desired */
@@ -2803,7 +2876,8 @@ static void on_call_audio_state(pjsua_call_info *ci, unsigned mi,
 	/* Otherwise connect to sound device */
 	if (connect_sound) {
 	    pjsua_conf_connect(call_conf_slot, 0);
-	    pjsua_conf_connect(0, call_conf_slot);
+	    if (!disconnect_mic)
+		pjsua_conf_connect(0, call_conf_slot);
 
 	    /* Automatically record conversation, if desired */
 	    if (app_config.auto_rec && app_config.rec_port != PJSUA_INVALID_ID) {
@@ -3211,6 +3285,11 @@ static void on_transport_state(pjsip_transport *tp,
 	const char *verif_msgs[32];
 	unsigned verif_msg_cnt;
 
+	/* Dump server TLS cipher */
+	PJ_LOG(4,(THIS_FILE, "TLS cipher used: 0x%06X/%s",
+		  ssl_sock_info->cipher,
+		  pj_ssl_cipher_name(ssl_sock_info->cipher) ));
+
 	/* Dump server TLS certificate */
 	pj_ssl_cert_info_dump(ssl_sock_info->remote_cert_info, "  ",
 			      buf, sizeof(buf));
@@ -3503,8 +3582,8 @@ static void vid_show_help(void)
     puts("| vid acc autotx on|off     Automatically offer video on/off                  |");
     puts("| vid acc cap ID            Set default capture device for current acc        |");
     puts("| vid acc rend ID           Set default renderer device for current acc       |");
-    puts("| vid call rx on|off N      Enable/disable video rx for stream N in curr call |");
-    puts("| vid call tx on|off N      Enable/disable video tx for stream N in curr call |");
+    puts("| vid call rx on|off N      Enable/disable video RX for stream N in curr call |");
+    puts("| vid call tx on|off N      Enable/disable video TX for stream N in curr call |");
     puts("| vid call add              Add video stream for current call                 |");
     puts("| vid call enable|disable N Enable/disable stream #N in current call          |");
     puts("| vid call cap N ID         Set capture dev ID for stream #N in current call  |");
@@ -3512,7 +3591,10 @@ static void vid_show_help(void)
     puts("| vid dev refresh           Refresh video device list                         |");
     puts("| vid dev prev on|off ID    Enable/disable preview for specified device ID    |");
     puts("| vid codec list            List video codecs                                 |");
-    puts("| vid codec prio PT PRIO    Set codec with pt PT priority to PRIO             |");
+    puts("| vid codec prio ID PRIO    Set codec ID priority to PRIO                     |");
+    puts("| vid codec fps ID NUM DEN  Set codec ID framerate to (NUM/DEN) fps           |");
+    puts("| vid codec bw ID AVG MAX   Set codec ID bitrate to AVG & MAX kbps            |");
+    puts("| vid codec size ID W H     Set codec ID size/resolution to W x H             |");
     puts("| vid win list              List all active video windows                     |");
     puts("| vid win arrange           Auto arrange windows                              |");
     puts("| vid win show|hide ID      Show/hide the specified video window ID           |");
@@ -3946,6 +4028,13 @@ static void app_config_init_video(pjsua_acc_config *acc_cfg)
                              PJMEDIA_VID_DEV_WND_RESIZABLE;
     acc_cfg->vid_cap_dev = app_config.vid.vcapture_dev;
     acc_cfg->vid_rend_dev = app_config.vid.vrender_dev;
+
+    if (app_config.avi_auto_play &&
+	app_config.avi_def_idx != PJSUA_INVALID_ID &&
+	app_config.avi[app_config.avi_def_idx].dev_id != PJMEDIA_VID_INVALID_DEV)
+    {
+	acc_cfg->vid_cap_dev = app_config.avi[app_config.avi_def_idx].dev_id;
+    }
 }
 
 static void app_config_show_video(int acc_id, const pjsua_acc_config *acc_cfg)
@@ -4162,47 +4251,91 @@ static void vid_handle_menu(char *menuin)
 	}
 
     } else if (strcmp(argv[1], "codec")==0) {
-	pjmedia_vid_codec_info ci[PJMEDIA_CODEC_MGR_MAX_CODECS];
-	unsigned prio[PJMEDIA_CODEC_MGR_MAX_CODECS];
-	unsigned count = PJMEDIA_CODEC_MGR_MAX_CODECS;
+	pjsua_codec_info ci[PJMEDIA_CODEC_MGR_MAX_CODECS];
+	unsigned count = PJ_ARRAY_SIZE(ci);
 	pj_status_t status;
 
 	if (argc==3 && strcmp(argv[2], "list")==0) {
-	    status = pjmedia_vid_codec_mgr_enum_codecs(NULL, &count, ci, prio);
+	    status = pjsua_vid_enum_codecs(ci, &count);
 	    if (status != PJ_SUCCESS) {
 		PJ_PERROR(1,(THIS_FILE, status, "Error enumerating codecs"));
 	    } else {
 		unsigned i;
 		PJ_LOG(3,(THIS_FILE, "Found %d video codecs:", count));
-		PJ_LOG(3,(THIS_FILE, " PT  Prio  Name"));
-		PJ_LOG(3,(THIS_FILE, "-------------------------"));
+		PJ_LOG(3,(THIS_FILE, "codec id      prio  fps    bw(kbps)   size"));
+		PJ_LOG(3,(THIS_FILE, "------------------------------------------"));
 		for (i=0; i<count; ++i) {
-		    PJ_LOG(3,(THIS_FILE, "% 3d % 3d  %.*s", ci[i].pt, prio[i],
-			      (int)ci[i].encoding_name.slen,
-			      ci[i].encoding_name.ptr));
+		    pjmedia_vid_codec_param cp;
+		    pjmedia_video_format_detail *vfd;
+
+		    status = pjsua_vid_codec_get_param(&ci[i].codec_id, &cp);
+		    if (status != PJ_SUCCESS)
+			continue;
+
+		    vfd = pjmedia_format_get_video_format_detail(&cp.enc_fmt,
+								 PJ_TRUE);
+		    PJ_LOG(3,(THIS_FILE, "%.*s%.*s %3d %7.2f  %4d/%4d  %dx%d", 
+			      (int)ci[i].codec_id.slen, ci[i].codec_id.ptr,
+			      13-(int)ci[i].codec_id.slen, "                ",
+			      ci[i].priority,
+			      (vfd->fps.num*1.0/vfd->fps.denum),
+			      vfd->avg_bps/1000, vfd->max_bps/1000,
+			      vfd->size.w, vfd->size.h));
 		}
 	    }
 	} else if (argc==5 && strcmp(argv[2], "prio")==0) {
-	    int pt = atoi(argv[3]);
-	    int prio = atoi(argv[4]);
-	    const pjmedia_vid_codec_info *pci;
-
-	    status = pjmedia_vid_codec_mgr_get_codec_info(NULL, pt, &pci);
-	    if (status != PJ_SUCCESS) {
-		PJ_PERROR(1,(THIS_FILE, status, "Unable to find codec"));
-	    } else {
-		char codec_id[40];
-		if (pjmedia_vid_codec_info_to_id(pci, codec_id,
-		                                 sizeof(codec_id)) == NULL)
-		{
-		    PJ_PERROR(1,(THIS_FILE, status, "Unable to get codec id"));
-		} else {
-		    pj_str_t cid = pj_str(codec_id);
-		    status = pjsua_vid_codec_set_priority(&cid,
-		                                          (pj_uint8_t)prio);
-		}
+	    pj_str_t cid;
+	    int prio;
+	    cid = pj_str(argv[3]);
+	    prio = atoi(argv[4]);
+	    status = pjsua_vid_codec_set_priority(&cid, (pj_uint8_t)prio);
+	    if (status != PJ_SUCCESS)
+		PJ_PERROR(1,(THIS_FILE, status, "Set codec priority error"));
+	} else if (argc==6 && strcmp(argv[2], "fps")==0) {
+	    pjmedia_vid_codec_param cp;
+	    pj_str_t cid;
+	    int M, N;
+	    cid = pj_str(argv[3]);
+	    M = atoi(argv[4]);
+	    N = atoi(argv[5]);
+	    status = pjsua_vid_codec_get_param(&cid, &cp);
+	    if (status == PJ_SUCCESS) {
+		cp.enc_fmt.det.vid.fps.num = M;
+		cp.enc_fmt.det.vid.fps.denum = N;
+		status = pjsua_vid_codec_set_param(&cid, &cp);
 	    }
-
+	    if (status != PJ_SUCCESS)
+		PJ_PERROR(1,(THIS_FILE, status, "Set codec framerate error"));
+	} else if (argc==6 && strcmp(argv[2], "bw")==0) {
+	    pjmedia_vid_codec_param cp;
+	    pj_str_t cid;
+	    int M, N;
+	    cid = pj_str(argv[3]);
+	    M = atoi(argv[4]);
+	    N = atoi(argv[5]);
+	    status = pjsua_vid_codec_get_param(&cid, &cp);
+	    if (status == PJ_SUCCESS) {
+		cp.enc_fmt.det.vid.avg_bps = M * 1000;
+		cp.enc_fmt.det.vid.max_bps = N * 1000;
+		status = pjsua_vid_codec_set_param(&cid, &cp);
+	    }
+	    if (status != PJ_SUCCESS)
+		PJ_PERROR(1,(THIS_FILE, status, "Set codec bitrate error"));
+	} else if (argc==6 && strcmp(argv[2], "size")==0) {
+	    pjmedia_vid_codec_param cp;
+	    pj_str_t cid;
+	    int M, N;
+	    cid = pj_str(argv[3]);
+	    M = atoi(argv[4]);
+	    N = atoi(argv[5]);
+	    status = pjsua_vid_codec_get_param(&cid, &cp);
+	    if (status == PJ_SUCCESS) {
+		cp.enc_fmt.det.vid.size.w = M;
+		cp.enc_fmt.det.vid.size.h = N;
+		status = pjsua_vid_codec_set_param(&cid, &cp);
+	    }
+	    if (status != PJ_SUCCESS)
+		PJ_PERROR(1,(THIS_FILE, status, "Set codec bitrate error"));
 	} else
 	    goto on_error;
     } else
@@ -5606,6 +5739,82 @@ pj_status_t app_init(int argc, char *argv[])
 
     }
 
+    /* Create AVI player virtual devices */
+    if (app_config.avi_cnt) {
+#if PJMEDIA_VIDEO_DEV_HAS_AVI
+	pjmedia_vid_dev_factory *avi_factory;
+
+	status = pjmedia_avi_dev_create_factory(pjsua_get_pool_factory(),
+	                                        app_config.avi_cnt,
+	                                        &avi_factory);
+	if (status != PJ_SUCCESS) {
+	    PJ_PERROR(1,(THIS_FILE, status, "Error creating AVI factory"));
+	    goto on_error;
+	}
+
+	for (i=0; i<app_config.avi_cnt; ++i) {
+	    pjmedia_avi_dev_param avdp;
+	    pjmedia_vid_dev_index avid;
+	    unsigned strm_idx, strm_cnt;
+
+	    app_config.avi[i].dev_id = PJMEDIA_VID_INVALID_DEV;
+	    app_config.avi[i].slot = PJSUA_INVALID_ID;
+
+	    pjmedia_avi_dev_param_default(&avdp);
+	    avdp.path = app_config.avi[i].path;
+
+	    status =  pjmedia_avi_dev_alloc(avi_factory, &avdp, &avid);
+	    if (status != PJ_SUCCESS) {
+		PJ_PERROR(1,(THIS_FILE, status,
+			     "Error creating AVI player for %.*s",
+			     (int)avdp.path.slen, avdp.path.ptr));
+		goto on_error;
+	    }
+
+	    PJ_LOG(4,(THIS_FILE, "AVI player %.*s created, dev_id=%d",
+		      (int)avdp.title.slen, avdp.title.ptr, avid));
+
+	    app_config.avi[i].dev_id = avid;
+	    if (app_config.avi_def_idx == PJSUA_INVALID_ID)
+		app_config.avi_def_idx = i;
+
+	    strm_cnt = pjmedia_avi_streams_get_num_streams(avdp.avi_streams);
+	    for (strm_idx=0; strm_idx<strm_cnt; ++strm_idx) {
+		pjmedia_port *aud;
+		pjmedia_format *fmt;
+		pjsua_conf_port_id slot;
+		char fmt_name[5];
+
+		aud = pjmedia_avi_streams_get_stream(avdp.avi_streams,
+		                                     strm_idx);
+		fmt = &aud->info.fmt;
+
+		pjmedia_fourcc_name(fmt->id, fmt_name);
+
+		if (fmt->id == PJMEDIA_FORMAT_PCM) {
+		    status = pjsua_conf_add_port(app_config.pool, aud,
+		                                 &slot);
+		    if (status == PJ_SUCCESS) {
+			PJ_LOG(4,(THIS_FILE,
+				  "AVI %.*s: audio added to slot %d",
+				  (int)avdp.title.slen, avdp.title.ptr,
+				  slot));
+			app_config.avi[i].slot = slot;
+		    }
+		} else {
+		    PJ_LOG(4,(THIS_FILE,
+			      "AVI %.*s: audio ignored, format=%s",
+			      (int)avdp.title.slen, avdp.title.ptr,
+			      fmt_name));
+		}
+	    }
+	}
+#else
+	PJ_LOG(2,(THIS_FILE,
+		  "Warning: --play-avi is ignored because AVI is disabled"));
+#endif	/* PJMEDIA_VIDEO_DEV_HAS_AVI */
+    }
+
     /* Add UDP transport unless it's disabled. */
     if (!app_config.no_udp) {
 	pjsua_acc_id aid;
@@ -5886,6 +6095,14 @@ pj_status_t app_destroy(void)
 	app_config.sc = NULL;
     }
 #endif
+
+    /* Close avi devs and ports */
+    for (i=0; i<app_config.avi_cnt; ++i) {
+	if (app_config.avi[i].slot != PJSUA_INVALID_ID)
+	    pjsua_conf_remove_port(app_config.avi[i].slot);
+	if (app_config.avi[i].dev_id != PJMEDIA_VID_INVALID_DEV)
+	    pjmedia_avi_dev_free(app_config.avi[i].dev_id);
+    }
 
     /* Close ringback port */
     if (app_config.ringback_port && 
