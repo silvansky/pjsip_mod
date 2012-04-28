@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'vidwin.h'
 **
-** Created: Sat 24. Dec 00:25:31 2011
+** Created: Fri 30. Mar 13:49:22 2012
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.3)
 **
 ** WARNING! All changes made in this file will be lost!

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'vidgui.h'
 **
-** Created: Sat 24. Dec 00:25:32 2011
+** Created: Fri 30. Mar 13:49:23 2012
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.3)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,7 +23,7 @@ static const uint qt_meta_data_MainWin[] = {
        5,       // revision
        0,       // classname
        0,    0, // classinfo
-      12,   14, // methods
+      13,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -41,10 +41,11 @@ static const uint qt_meta_data_MainWin[] = {
      116,    8,    8,    8, 0x0a,
      123,    8,    8,    8, 0x0a,
      132,    8,    8,    8, 0x0a,
-     152,  139,    8,    8, 0x0a,
-     172,    8,    8,    8, 0x0a,
-     189,    8,    8,    8, 0x0a,
-     211,  207,    8,    8, 0x0a,
+     145,  139,    8,    8, 0x0a,
+     183,  170,    8,    8, 0x0a,
+     203,    8,    8,    8, 0x0a,
+     220,    8,    8,    8, 0x0a,
+     242,  238,    8,    8, 0x0a,
 
        0        // eod
 };
@@ -53,7 +54,8 @@ static const char qt_meta_stringdata_MainWin[] = {
     "MainWin\0\0,\0signalNewCall(int,bool)\0"
     "signalCallReleased()\0signalInitVideoWindow()\0"
     "signalShowStatus(QString)\0preview()\0"
-    "call()\0hangup()\0quit()\0cid,incoming\0"
+    "call()\0hangup()\0quit()\0state\0"
+    "onVidEnabledChanged(int)\0cid,incoming\0"
     "onNewCall(int,bool)\0onCallReleased()\0"
     "initVideoWindow()\0msg\0doShowStatus(QString)\0"
 };
@@ -95,13 +97,14 @@ int MainWin::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
         case 5: call(); break;
         case 6: hangup(); break;
         case 7: quit(); break;
-        case 8: onNewCall((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< bool(*)>(_a[2]))); break;
-        case 9: onCallReleased(); break;
-        case 10: initVideoWindow(); break;
-        case 11: doShowStatus((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 8: onVidEnabledChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 9: onNewCall((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< bool(*)>(_a[2]))); break;
+        case 10: onCallReleased(); break;
+        case 11: initVideoWindow(); break;
+        case 12: doShowStatus((*reinterpret_cast< const QString(*)>(_a[1]))); break;
         default: ;
         }
-        _id -= 12;
+        _id -= 13;
     }
     return _id;
 }
