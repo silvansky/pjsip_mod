@@ -55,7 +55,7 @@
 # define PJ_HAS_THREADS						1
 #endif // PJ_DARWINOS
 
-#define PJ_DEBUG							1
-#define PJ_LOG_MAX_LEVEL					6
+#define PJ_DEBUG							0
+//#define PJ_LOG_MAX_LEVEL					6
 
 

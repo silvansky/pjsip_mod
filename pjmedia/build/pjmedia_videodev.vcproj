@@ -58,7 +58,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../include,../../pjlib/include,../../pjlib-util/include,../../pjnath/include,../../third_party/portaudio/include,../../third_party/speex/include,../../third_party/build/srtp,../../third_party/srtp/crypto/include,../../third_party/srtp/include,../.."
+				AdditionalIncludeDirectories="../include,../../pjlib/include,../../pjlib-util/include,../../pjnath/include,../../third_party/portaudio/include,../../third_party/speex/include,../../third_party/build/srtp,../../third_party/srtp/crypto/include,../../third_party/srtp/include,../..,../../third_party/BaseClasses"
 				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
@@ -396,7 +396,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../include,../../pjlib/include,../../pjlib-util/include,../../pjnath/include,../../third_party/portaudio/include,../../third_party/speex/include,../../third_party/build/srtp,../../third_party/srtp/crypto/include,../../third_party/srtp/include,../.."
+				AdditionalIncludeDirectories="../include,../../pjlib/include,../../pjlib-util/include,../../pjnath/include,../../third_party/portaudio/include,../../third_party/speex/include,../../third_party/build/srtp,../../third_party/srtp/crypto/include,../../third_party/srtp/include,../..,../../third_party/BaseClasses"
 				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
@@ -734,7 +734,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../include,../../pjlib/include,../../pjlib-util/include,../../pjnath/include,../../third_party/portaudio/include,../../third_party/speex/include,../../third_party/build/srtp,../../third_party/srtp/crypto/include,../../third_party/srtp/include,../.."
+				AdditionalIncludeDirectories="../include,../../pjlib/include,../../pjlib-util/include,../../pjnath/include,../../third_party/portaudio/include,../../third_party/speex/include,../../third_party/build/srtp,../../third_party/srtp/crypto/include,../../third_party/srtp/include,../..,../../third_party/BaseClasses"
 				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
@@ -1072,7 +1072,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../include,../../pjlib/include,../../pjlib-util/include,../../pjnath/include,../../third_party/portaudio/include,../../third_party/speex/include,../../third_party/build/srtp,../../third_party/srtp/crypto/include,../../third_party/srtp/include,../.."
+				AdditionalIncludeDirectories="../include,../../pjlib/include,../../pjlib-util/include,../../pjnath/include,../../third_party/portaudio/include,../../third_party/speex/include,../../third_party/build/srtp,../../third_party/srtp/crypto/include,../../third_party/srtp/include,../..,../../third_party/BaseClasses"
 				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
@@ -1410,7 +1410,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../include,../../pjlib/include,../../pjlib-util/include,../../pjnath/include,../../third_party/portaudio/include,../../third_party/speex/include,../../third_party/build/srtp,../../third_party/srtp/crypto/include,../../third_party/srtp/include,../.."
+				AdditionalIncludeDirectories="../include,../../pjlib/include,../../pjlib-util/include,../../pjnath/include,../../third_party/portaudio/include,../../third_party/speex/include,../../third_party/build/srtp,../../third_party/srtp/crypto/include,../../third_party/srtp/include,../..,../../third_party/BaseClasses"
 				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
@@ -1748,7 +1748,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../include,../../pjlib/include,../../pjlib-util/include,../../pjnath/include,../../third_party/portaudio/include,../../third_party/speex/include,../../third_party/build/srtp,../../third_party/srtp/crypto/include,../../third_party/srtp/include,../.."
+				AdditionalIncludeDirectories="../include,../../pjlib/include,../../pjlib-util/include,../../pjnath/include,../../third_party/portaudio/include,../../third_party/speex/include,../../third_party/build/srtp,../../third_party/srtp/crypto/include,../../third_party/srtp/include,../..,../../third_party/BaseClasses"
 				PreprocessorDefinitions="_LIB;"
 				PrecompiledHeaderFile=""
 			/>
