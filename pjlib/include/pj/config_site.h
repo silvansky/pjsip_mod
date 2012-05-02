@@ -8,7 +8,7 @@
 
 #define PJMEDIA_HAS_VIDEO					1
 #define PJMEDIA_HAS_FFMPEG					1
-#define PJMEDIA_HAS_X264_CODEC				1
+#define PJMEDIA_HAS_X264_CODEC				0
 #define PJMEDIA_HAS_SRTP					0
 //#define PJMEDIA_HAS_FFMPEG_CODEC			1
 #define PJMEDIA_HAS_FFMPEG_CODEC_H264		1
@@ -36,7 +36,7 @@
 #if defined(PJ_WIN32) && PJ_WIN32!=0
 # define PJMEDIA_VIDEO_DEV_HAS_DSHOW		1
 # define PJMEDIA_VIDEO_DEV_HAS_QT			0
-#endif // PJ_WIN32_WINCE
+#endif // PJ_WIN32
 
 
 #if defined(PJ_DARWINOS) && PJ_DARWINOS!=0
@@ -57,4 +57,5 @@
 
 #define PJ_DEBUG							1
 #define PJ_LOG_MAX_LEVEL					6
+
 
