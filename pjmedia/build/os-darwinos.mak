@@ -10,7 +10,7 @@ export CFLAGS +=
 #   - pa_win32:	    	PortAudio on Win32 (WMME)
 #   - ds:	    	Win32 DirectSound (dsound.c)
 #   - null:	    	Null sound device (nullsound.c)
-AC_PJMEDIA_SND=pa_old_darwinos
+AC_PJMEDIA_SND=pa_darwinos
 
 # For Unix, specify if ALSA should be supported
 AC_PA_USE_ALSA=0
