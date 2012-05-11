@@ -463,11 +463,12 @@ typedef pjmedia_vid_dev_factory*
 (*pjmedia_vid_dev_factory_create_func_ptr)(pj_pool_factory*);
 
 
-
+// POPOV: callback functions to manipulate with frames
 typedef struct pjmedia_vid_dev_myframe
 {
-	// ПОПОВ. callback ф-ия передающая кадр
+	// POPOV: callback function for transmit frame to finish render device
 	pj_status_t (*put_frame_callback)(int call_id, pjmedia_frame *frame, int w, int h, int stride);
+	// POPOV: callback function for transmit preview frame to finish render device
 	pj_status_t (*preview_frame_callback)(int call_id, pjmedia_frame *frame, const char* colormodelName, int w, int h, int stride);
 } pjmedia_vid_dev_myframe;
 

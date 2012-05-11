@@ -1264,7 +1264,7 @@ pj_status_t pjsua_vid_channel_update(pjsua_call_media *call_med,
 
 			w = &pjsua_var.win[wid];
 
-			pjmedia_vid_port_set_call_id(w->vp_cap, call_med->call->index);
+			pjmedia_vid_port_set_call_id(w->vp_cap, call_med->call->index); // POPOV: setting call_id for capture device
 
 #if ENABLE_EVENT
 			pjmedia_event_subscribe(NULL, &call_media_on_event,

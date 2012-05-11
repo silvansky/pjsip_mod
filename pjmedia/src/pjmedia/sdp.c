@@ -503,12 +503,17 @@ PJ_DEF(pj_status_t) pjmedia_sdp_rtpmap_to_attr(pj_pool_t *pool,
 		(int)rtpmap->param.slen,
 		rtpmap->param.ptr);
 
+
 	if (len < 1 || len > (int)sizeof(tempbuf))
 		return PJMEDIA_SDP_ERTPMAPTOOLONG;
 
 	attr->value.slen = len;
 	attr->value.ptr = (char*) pj_pool_alloc(pool, attr->value.slen+1);
-	pj_memcpy(attr->value.ptr, tempbuf, attr->value.slen+1);
+	//pj_memcpy(attr->value.ptr, tempbuf, attr->value.slen+1);
+
+	// POPOV: add zerro-end to attribute value string
+	pj_memcpy(attr->value.ptr, tempbuf, attr->value.slen);
+	attr->value.ptr[attr->value.slen] = '\0';
 
 	*p_attr = attr;
 	return PJ_SUCCESS;

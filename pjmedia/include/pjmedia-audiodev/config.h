@@ -89,6 +89,15 @@ PJ_BEGIN_DECL
 #   define PJMEDIA_AUDIO_DEV_HAS_WMME		1
 #endif
 
+/**
+* This setting controls whether DUMMY support should be included.
+* Dummy device uses when one or more sounde device is absent for make call to one side
+*/
+#ifndef PJMEDIA_AUDIO_DEV_HAS_DUMMY
+#   define PJMEDIA_AUDIO_DEV_HAS_DUMMY		0
+#endif
+
+
 
 /**
  * This setting controls whether Symbian APS support should be included.

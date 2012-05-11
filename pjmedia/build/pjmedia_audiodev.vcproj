@@ -3638,6 +3638,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\src\pjmedia-audiodev\dummy_dev.c"
+				>
+			</File>
+			<File
 				RelativePath="..\src\pjmedia-audiodev\errno.c"
 				>
 				<FileConfiguration

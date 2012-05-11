@@ -222,6 +222,7 @@ PJ_DEF(pj_status_t) pjmedia_vid_port_create( pj_pool_t *pool,
 	vp->dir = prm->vidparam.dir;
 	//    vp->cap_size = vfd->size;
 
+	// POPOV: base init of call_id
 	vp->call_id = -1;
 
 	vparam = prm->vidparam;
@@ -1093,12 +1094,14 @@ static pj_status_t vid_pasv_port_get_frame(struct pjmedia_port *this_port,
 	return status;
 }
 
+// POPOV: manipulations with call_id for videoport
 PJ_DECL(void) pjmedia_vid_port_set_call_id(pjmedia_vid_port *vid_port, int call_id)
 {
 	if(vid_port)
 		vid_port->call_id = call_id;
 }
 
+// POPOV: manipulations with call_id for videoport
 PJ_DECL(int) pjmedia_vid_port_get_call_id(pjmedia_vid_port *vid_port)
 {
 	if(!vid_port)

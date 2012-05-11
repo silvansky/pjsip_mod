@@ -82,6 +82,10 @@ pjmedia_aud_dev_factory* pjmedia_alsa_factory(pj_pool_factory *pf);
 pjmedia_aud_dev_factory* pjmedia_wmme_factory(pj_pool_factory *pf);
 #endif
 
+#if PJMEDIA_AUDIO_DEV_HAS_DUMMY
+pjmedia_aud_dev_factory* pjmedia_dummy_factory(pj_pool_factory *pf);
+#endif
+
 #if PJMEDIA_AUDIO_DEV_HAS_SYMB_VAS
 pjmedia_aud_dev_factory* pjmedia_symb_vas_factory(pj_pool_factory *pf);
 #endif
@@ -396,9 +400,16 @@ PJ_DEF(pj_status_t) pjmedia_aud_subsys_init(pj_pool_factory *pf)
 #if PJMEDIA_AUDIO_DEV_HAS_PORTAUDIO
 	aud_subsys.drv[aud_subsys.drv_cnt++].create = &pjmedia_pa_factory;
 #endif
+
+
 #if PJMEDIA_AUDIO_DEV_HAS_WMME
 	aud_subsys.drv[aud_subsys.drv_cnt++].create = &pjmedia_wmme_factory;
 #endif
+
+#if PJMEDIA_AUDIO_DEV_HAS_DUMMY
+	aud_subsys.drv[aud_subsys.drv_cnt++].create = &pjmedia_dummy_factory;
+#endif
+
 #if PJMEDIA_AUDIO_DEV_HAS_SYMB_VAS
 	aud_subsys.drv[aud_subsys.drv_cnt++].create = &pjmedia_symb_vas_factory;
 #endif

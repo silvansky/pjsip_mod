@@ -238,6 +238,7 @@ PJ_DECL(pj_status_t) pjmedia_vid_port_stop(pjmedia_vid_port *vid_port);
  */
 PJ_DECL(void) pjmedia_vid_port_destroy(pjmedia_vid_port *vid_port);
 
+// POPOV: manipulations with call_id for videoport
 PJ_DECL(void) pjmedia_vid_port_set_call_id(pjmedia_vid_port *vid_port, int call_id);
 PJ_DECL(int) pjmedia_vid_port_get_call_id(pjmedia_vid_port *vid_port);
 
