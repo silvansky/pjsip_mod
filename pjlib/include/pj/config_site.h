@@ -57,14 +57,11 @@
 #  undef PJMEDIA_VIDEO_DEV_HAS_QT
 # endif
 # define PJMEDIA_VIDEO_DEV_HAS_QT			1
-
-# define PJMEDIA_HAS_SRTP					0
-
-# define PJ_HAS_THREADS						1
 #endif // PJ_DARWINOS
 
 #define PJ_DEBUG							0
 //#define PJ_LOG_MAX_LEVEL					6
+
 
 
 

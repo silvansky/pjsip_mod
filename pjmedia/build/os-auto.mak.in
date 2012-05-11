@@ -116,7 +116,7 @@ else
 export CODEC_OBJS += opencore_amrnb.o
 endif
 
-export CODEC_OBJS += x264.o
+export CODEC_OBJS += x264_codec.o
 
 
 #
