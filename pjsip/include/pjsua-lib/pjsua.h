@@ -1,4 +1,4 @@
-/* $Id: pjsua.h 4054 2012-04-16 07:50:01Z bennylp $ */
+/* $Id: pjsua.h 4138 2012-05-22 09:50:47Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -659,6 +659,25 @@ typedef struct pjsua_callback
      * @param call_id	The call index.
      */
     void (*on_call_media_state)(pjsua_call_id call_id);
+
+
+    /**
+     * Notify application when a call has just created a local SDP (for 
+     * initial or subsequent SDP offer/answer). Application can implement
+     * this callback to modify the SDP, before it is being sent and/or
+     * negotiated with remote SDP, for example to apply per account/call
+     * basis codecs priority or to add custom/proprietary SDP attributes.
+     *
+     * @param call_id	The call index.
+     * @param sdp	The SDP has just been created.
+     * @param pool	The pool instance, application should use this pool
+     *			to modify the SDP.
+     * @param rem_sdp	The remote SDP, will be NULL if local is SDP offerer.
+     */
+    void (*on_call_sdp_created)(pjsua_call_id call_id,
+			        pjmedia_sdp_session *sdp,
+			        pj_pool_t *pool,
+			        const pjmedia_sdp_session *rem_sdp);
 
 
     /**
@@ -1537,12 +1556,7 @@ typedef struct pjsua_config
     int		     srtp_secure_signaling;
 
     /**
-     * Specify whether SRTP in PJMEDIA_SRTP_OPTIONAL mode should compose
-     * duplicated media in SDP offer, i.e: unsecured and secured version.
-     * Otherwise, the SDP media will be composed as unsecured media but
-     * with SDP "crypto" attribute.
-     *
-     * Default: PJ_FALSE
+     * This setting has been deprecated and will be ignored.
      */
     pj_bool_t	     srtp_optional_dup_offer;
 
@@ -2916,12 +2930,7 @@ typedef struct pjsua_acc_config
     int		     srtp_secure_signaling;
 
     /**
-     * Specify whether SRTP in PJMEDIA_SRTP_OPTIONAL mode should compose
-     * duplicated media in SDP offer, i.e: unsecured and secured version.
-     * Otherwise, the SDP media will be composed as unsecured media but
-     * with SDP "crypto" attribute.
-     *
-     * Default: PJ_FALSE
+     * This setting has been deprecated and will be ignored.
      */
     pj_bool_t	     srtp_optional_dup_offer;
 

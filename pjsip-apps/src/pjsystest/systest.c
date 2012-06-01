@@ -1,4 +1,4 @@
-/* $Id: systest.c 3664 2011-07-19 03:42:28Z nanang $ */
+/* $Id: systest.c 4087 2012-04-26 03:39:24Z ming $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -88,12 +88,16 @@ static gui_menu root_menu = {
 
 /*****************************************************************/
 
+#if defined(PJ_DARWINOS) && PJ_DARWINOS!=0
 PJ_INLINE(char *) add_path(const char *path, const char *fname)
 {
     strncpy(fpath, path, PATH_LENGTH);
     strncat(fpath, fname, PATH_LENGTH);
     return fpath;
 }
+#else
+#   define add_path(path, fname) fname
+#endif
 
 static void exit_app(void)
 {
@@ -967,8 +971,9 @@ static void systest_aec_test(void)
 	goto on_return;
     }
 
-    status = pjsua_recorder_create(pj_cstr(&tmp, AEC_REC_PATH), 0, 0, -1,
-			           0, &writer_id);
+    status = pjsua_recorder_create(
+                 pj_cstr(&tmp, add_path(doc_path, AEC_REC_PATH)), 0, 0, -1,
+                 0, &writer_id);
     if (status != PJ_SUCCESS) {
 	PJ_PERROR(1,(THIS_FILE, status, "Error writing WAV file %s",
 		     AEC_REC_PATH));
@@ -999,7 +1004,9 @@ static void systest_aec_test(void)
     /*
      * Play the result.
      */
-    status = pjsua_player_create(pj_cstr(&tmp, AEC_REC_PATH), 0, &player_id);
+    status = pjsua_player_create(
+                 pj_cstr(&tmp, add_path(doc_path, AEC_REC_PATH)),
+                 0, &player_id);
     if (status != PJ_SUCCESS) {
 	PJ_PERROR(1,(THIS_FILE, status, "Error opening WAV file %s", AEC_REC_PATH));
 	goto on_return;

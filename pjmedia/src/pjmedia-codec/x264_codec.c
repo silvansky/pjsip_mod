@@ -377,7 +377,9 @@ static pj_status_t h264_preopen(x264_private *x264)
 		ctx->i_fps_den = 1;//x264->desc->fps.denum; //1; 
 		// Intra refres:
 		ctx->i_keyint_max = ctx->i_fps_num / 2;
+		//ctx->i_keyint_max = ctx->i_fps_num * 20; // POPOV: lets play
 
+		//ctx->b_intra_refresh = 1;
 		ctx->b_intra_refresh = 1;
 		//Rate control:
 		ctx->rc.i_rc_method = X264_RC_CRF;

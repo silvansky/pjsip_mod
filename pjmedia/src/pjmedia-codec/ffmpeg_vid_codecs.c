@@ -21,6 +21,7 @@
 #include <pjmedia-codec/h264_packetizer.h>
 #include <pjmedia/errno.h>
 #include <pjmedia/vid_codec_util.h>
+//#include <pjlib-util/crc32.h> // POPOV: test crc of frames
 #include <pj/assert.h>
 #include <pj/list.h>
 #include <pj/log.h>
@@ -28,6 +29,8 @@
 #include <pj/pool.h>
 #include <pj/string.h>
 #include <pj/os.h>
+
+
 
 
 /*
@@ -1755,6 +1758,7 @@ static pj_status_t ffmpeg_codec_decode_whole(pjmedia_vid_codec *codec,
 	AVFrame avframe;
 	AVPacket avpacket;
 	int err, got_picture;
+	//pj_uint32_t crc1 =0, crc2 =0;
 
 	/* Check if decoder has been opened */
 	PJ_ASSERT_RETURN(ff->dec_ctx, PJ_EINVALIDOP);
@@ -1797,6 +1801,11 @@ static pj_status_t ffmpeg_codec_decode_whole(pjmedia_vid_codec *codec,
 	avpacket.flags = 0;
 #endif
 
+	//PJ_LOG(3, (THIS_FILE, "Try to decode packet %d", input->timestamp.u32.lo));
+
+
+
+
 #if LIBAVCODEC_VER_AT_LEAST(52,72)
 	err = avcodec_decode_video2(ff->dec_ctx, &avframe, &got_picture, &avpacket);
 #else
@@ -1811,12 +1820,12 @@ static pj_status_t ffmpeg_codec_decode_whole(pjmedia_vid_codec *codec,
 		output->size = 0;
 		print_ffmpeg_err(err);
 
-		PJ_LOG(3, (THIS_FILE, "Failed to decode packet %d", input->timestamp.u32.hi));
+		PJ_LOG(3, (THIS_FILE, "Failed to decode packet %d", input->timestamp.u32.lo));
 
 		/* Broadcast missing keyframe event */
-		pjmedia_event_init(&event, PJMEDIA_EVENT_KEYFRAME_MISSING,
-			&input->timestamp, codec);
-		pjmedia_event_publish(NULL, codec, &event, 0);
+		////////pjmedia_event_init(&event, PJMEDIA_EVENT_KEYFRAME_MISSING, // POPOV: temporary disable Broadcast missing keyframe event
+		////////	&input->timestamp, codec);
+		////////pjmedia_event_publish(NULL, codec, &event, 0);
 
 		return PJMEDIA_CODEC_EBADBITSTREAM;
 	}
@@ -1827,13 +1836,17 @@ static pj_status_t ffmpeg_codec_decode_whole(pjmedia_vid_codec *codec,
 		unsigned i;
 		pj_status_t status;
 
+		//my_crc_test.g_crc2 = pj_crc32_calc(avpacket.data, avpacket.size);
+		//if(my_crc_test.g_crc1 != my_crc_test.g_crc2)
+			//PJ_LOG(3, (THIS_FILE, "crc1 %d  crc2 %d", my_crc_test.g_crc1, my_crc_test.g_crc2));
+
 		/* Check decoding result, e.g: see if the format got changed,
 		* keyframe found/missing.
 		*/
-		status = check_decode_result(codec, &input->timestamp,
-			avframe.key_frame);
-		if (status != PJ_SUCCESS)
-			return status;
+		//////////status = check_decode_result(codec, &input->timestamp, // POPOV: temporary disable check_decode_result
+		//////////	avframe.key_frame);
+		//////////if (status != PJ_SUCCESS)
+		//////////	return status;
 
 		/* Check provided buffer size */
 		if (vafp->framebytes > output_buf_len)
@@ -1904,6 +1917,7 @@ static pj_status_t ffmpeg_codec_decode( pjmedia_vid_codec *codec,
 				&whole_len);
 			if (status != PJ_SUCCESS) {
 				PJ_PERROR(5,(THIS_FILE, status, "Unpacketize error"));
+				//PJ_LOG(5,(THIS_FILE, "Unpacketize error !!!"));
 				continue;
 			}
 		}

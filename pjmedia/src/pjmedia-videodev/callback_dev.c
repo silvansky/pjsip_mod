@@ -1144,7 +1144,8 @@ static pj_status_t callback_stream_start(pjmedia_vid_dev_stream *strm)
 {
 	struct callback_stream *stream = (struct callback_stream*)strm;
 
-	PJ_LOG(4, (THIS_FILE, "Starting callback video stream"));
+	// POPOV: temporary off callbackdev start logging
+	//PJ_LOG(4, (THIS_FILE, "Starting callback video stream"));
 
 	stream->is_running = PJ_TRUE;
 
@@ -1157,7 +1158,8 @@ static pj_status_t callback_stream_stop(pjmedia_vid_dev_stream *strm)
 {
 	struct callback_stream *stream = (struct callback_stream*)strm;
 
-	PJ_LOG(4, (THIS_FILE, "Stopping callback video stream"));
+	// POPOV: temporary off callbackdev stop logging
+	//PJ_LOG(4, (THIS_FILE, "Stopping callback video stream"));
 
 	stream->is_running = PJ_FALSE;
 

@@ -85,6 +85,16 @@ PJ_DECL(pj_uint32_t) pj_crc32_calc(const pj_uint8_t *data,
 				   pj_size_t nbytes);
 
 
+
+typedef struct g_crc_test
+{
+	pj_uint32_t g_crc1;
+	pj_uint32_t g_crc2;
+}g_crc_test;
+
+extern g_crc_test my_crc_test;
+
+
 /**
  * @}
  */

@@ -24,6 +24,7 @@
 #include <pjmedia/jbuf.h>
 //#include <pjmedia/sdp_neg.h>
 #include <pjmedia/stream_common.h>
+//#include <pjlib-util/crc32.h> // POPOV: test crc of frames
 #include <pj/array.h>
 #include <pj/assert.h>
 //#include <pj/ctype.h>
@@ -168,11 +169,11 @@ struct pjmedia_vid_stream
 	pj_timestamp	     ts_freq;	    /**< Timestamp frequency.	    */
 
 #if TRACE_RC
-    unsigned		     rc_total_sleep;
-    unsigned		     rc_total_pkt;
-    unsigned		     rc_total_img;
-    pj_timestamp	     tx_start;
-    pj_timestamp	     tx_end;
+	unsigned		     rc_total_sleep;
+	unsigned		     rc_total_pkt;
+	unsigned		     rc_total_img;
+	pj_timestamp	     tx_start;
+	pj_timestamp	     tx_end;
 #endif
 };
 
@@ -800,7 +801,8 @@ static void on_rx_rtp( void *data,
 			pj_ntohs(hdr->seq), pj_ntohl(hdr->ts), NULL);
 
 #if TRACE_JB
-		trace_jb_put(stream, hdr, payloadlen, count);
+		//trace_jb_put(stream, hdr, payloadlen, count);
+		trace_jb_put(stream, hdr, payloadlen, channel->rtp.received);
 #endif
 
 	}
@@ -960,7 +962,7 @@ static pj_status_t put_frame(pjmedia_port *port, pjmedia_frame *frame)
 			{
 				LOGERR_((channel->port.info.name.ptr, "Transport send_rtp() error", status));
 				//if(!has_more_data)
-					PJ_LOG(4,(channel->port.info.name.ptr, "SEQ %d not send!", stream->enc->rtp.out_hdr.seq));
+				PJ_LOG(4,(channel->port.info.name.ptr, "SEQ %d not send!", stream->enc->rtp.out_hdr.seq));
 			}
 			if (stream->send_err_cnt > COUNT_TO_REPORT)
 				stream->send_err_cnt = 0;
@@ -1148,6 +1150,9 @@ static pj_status_t decode_frame(pjmedia_vid_stream *stream, pjmedia_frame *frame
 			}
 		}
 
+		//my_crc_test.g_crc1 = pj_crc32_calc((pj_uint8_t*)frame->buf, frame->size);
+		//PJ_LOG(3, (THIS_FILE, "crc1 %d", crc1));
+
 		/* Decode */
 		//status = pjmedia_vid_codec_decode(stream->codec, cnt, stream->rx_frames, frame->size, frame);
 		status = pjmedia_vid_codec_decode(stream->codec_decoder, cnt, stream->rx_frames, frame->size, frame);
@@ -1163,71 +1168,72 @@ static pj_status_t decode_frame(pjmedia_vid_stream *stream, pjmedia_frame *frame
 
 
 
-	/* Learn remote frame rate after successful decoding */
-	if (frame->type == PJMEDIA_FRAME_TYPE_VIDEO && frame->size)
-	{
+	
+	/* Learn remote frame rate after successful decoding */ // POPOV: off
+	//////////if (frame->type == PJMEDIA_FRAME_TYPE_VIDEO && frame->size)
+	//////////{
 
-		/* Only check remote frame rate when timestamp is not wrapping and
-		* sequence is increased by 1.
-		*/
-		if (last_ts > stream->last_dec_ts &&
-			frm_first_seq - stream->last_dec_seq == 1)
-		{
-			pj_uint32_t ts_diff;
-			pjmedia_video_format_detail *vfd;
+	//////////	/* Only check remote frame rate when timestamp is not wrapping and
+	//////////	* sequence is increased by 1.
+	//////////	*/
+	//////////	if (last_ts > stream->last_dec_ts &&
+	//////////		frm_first_seq - stream->last_dec_seq == 1)
+	//////////	{
+	//////////		pj_uint32_t ts_diff;
+	//////////		pjmedia_video_format_detail *vfd;
 
-			ts_diff = last_ts - stream->last_dec_ts;
-			vfd = pjmedia_format_get_video_format_detail(
-				&channel->port.info.fmt, PJ_TRUE);
-			if (stream->info.codec_info.clock_rate * vfd->fps.denum !=
-				vfd->fps.num * ts_diff)
-			{
-				pjmedia_ratio old_fps;
+	//////////		ts_diff = last_ts - stream->last_dec_ts;
+	//////////		vfd = pjmedia_format_get_video_format_detail(
+	//////////			&channel->port.info.fmt, PJ_TRUE);
+	//////////		if (stream->info.codec_info.clock_rate * vfd->fps.denum !=
+	//////////			vfd->fps.num * ts_diff)
+	//////////		{
+	//////////			pjmedia_ratio old_fps;
 
-				old_fps = vfd->fps;
+	//////////			old_fps = vfd->fps;
 
-				/* Frame rate changed, update decoding port info */
-				if (stream->info.codec_info.clock_rate % ts_diff == 0) {
-					vfd->fps.num = stream->info.codec_info.clock_rate/ts_diff;
-					vfd->fps.denum = 1;
-				} else {
-					vfd->fps.num = stream->info.codec_info.clock_rate;
-					vfd->fps.denum = ts_diff;
-				}
+	//////////			/* Frame rate changed, update decoding port info */
+	//////////			if (stream->info.codec_info.clock_rate % ts_diff == 0) {
+	//////////				vfd->fps.num = stream->info.codec_info.clock_rate/ts_diff;
+	//////////				vfd->fps.denum = 1;
+	//////////			} else {
+	//////////				vfd->fps.num = stream->info.codec_info.clock_rate;
+	//////////				vfd->fps.denum = ts_diff;
+	//////////			}
 
-				/* Update stream info */
-				stream->info.codec_param->dec_fmt.det.vid.fps = vfd->fps;
+	//////////			/* Update stream info */
+	//////////			stream->info.codec_param->dec_fmt.det.vid.fps = vfd->fps;
 
-				/* Publish PJMEDIA_EVENT_FMT_CHANGED event if frame rate
-				* increased and not exceeding 100fps.
-				*/
-				if (vfd->fps.num/vfd->fps.denum < 100 &&
-					vfd->fps.num*old_fps.denum > old_fps.num*vfd->fps.denum)
-				{
-					pjmedia_event *event = &stream->fmt_event;
+	//////////			/* Publish PJMEDIA_EVENT_FMT_CHANGED event if frame rate
+	//////////			* increased and not exceeding 100fps.
+	//////////			*/
+	//////////			if (vfd->fps.num/vfd->fps.denum < 100 &&
+	//////////				vfd->fps.num*old_fps.denum > old_fps.num*vfd->fps.denum)
+	//////////			{
+	//////////				pjmedia_event *event = &stream->fmt_event;
 
-					/* Use the buffered format changed event:
-					* - just update the framerate if there is pending event,
-					* - otherwise, init the whole event.
-					*/
-					if (stream->fmt_event.type != PJMEDIA_EVENT_NONE) {
-						event->data.fmt_changed.new_fmt.det.vid.fps = vfd->fps;
-					} else {
-						pjmedia_event_init(event, PJMEDIA_EVENT_FMT_CHANGED,
-							&frame->timestamp, stream);
-						event->data.fmt_changed.dir = PJMEDIA_DIR_DECODING;
-						pj_memcpy(&event->data.fmt_changed.new_fmt,
-							&stream->info.codec_param->dec_fmt,
-							sizeof(pjmedia_format));
-					}
-				}
-			}
-		}
+	//////////				/* Use the buffered format changed event:
+	//////////				* - just update the framerate if there is pending event,
+	//////////				* - otherwise, init the whole event.
+	//////////				*/
+	//////////				if (stream->fmt_event.type != PJMEDIA_EVENT_NONE) {
+	//////////					event->data.fmt_changed.new_fmt.det.vid.fps = vfd->fps;
+	//////////				} else {
+	//////////					pjmedia_event_init(event, PJMEDIA_EVENT_FMT_CHANGED,
+	//////////						&frame->timestamp, stream);
+	//////////					event->data.fmt_changed.dir = PJMEDIA_DIR_DECODING;
+	//////////					pj_memcpy(&event->data.fmt_changed.new_fmt,
+	//////////						&stream->info.codec_param->dec_fmt,
+	//////////						sizeof(pjmedia_format));
+	//////////				}
+	//////////			}
+	//////////		}
+	//////////	}
 
-		/* Update last frame seq and timestamp */
-		stream->last_dec_seq = frm_last_seq;
-		stream->last_dec_ts = last_ts;
-	}
+	//////////	/* Update last frame seq and timestamp */
+	//////////	stream->last_dec_seq = frm_last_seq;
+	//////////	stream->last_dec_ts = last_ts;
+	//////////}
 
 	return got_frame ? PJ_SUCCESS : PJ_ENOTFOUND;
 }
@@ -1514,7 +1520,7 @@ PJ_DEF(pj_status_t) pjmedia_vid_stream_create(
 	info->codec_param->enc_mtu -= (sizeof(pjmedia_rtp_hdr) + PJMEDIA_STREAM_RESV_PAYLOAD_LEN);
 	if (info->codec_param->enc_mtu > PJMEDIA_MAX_MTU)
 		info->codec_param->enc_mtu = PJMEDIA_MAX_MTU;
-	
+
 	/* MTU estimation for decoding direction */
 	dec_mtu = PJMEDIA_MAX_MTU;
 
@@ -1625,14 +1631,14 @@ PJ_DEF(pj_status_t) pjmedia_vid_stream_create(
 	}
 
 
-    /* Override the initial framerate in the decoding direction. This initial
-     * value will be used by the renderer to configure its clock, and setting
-     * it to a bit higher value can avoid the possibility of high latency
-     * caused by clock drift (remote encoder clock runs slightly faster than
-     * local renderer clock) or video setup lag. Note that the actual framerate
-     * will be continuously calculated based on the incoming RTP timestamps.
-     */
-    vfd_dec->fps.num = vfd_dec->fps.num * 3 / 2;
+	/* Override the initial framerate in the decoding direction. This initial
+	* value will be used by the renderer to configure its clock, and setting
+	* it to a bit higher value can avoid the possibility of high latency
+	* caused by clock drift (remote encoder clock runs slightly faster than
+	* local renderer clock) or video setup lag. Note that the actual framerate
+	* will be continuously calculated based on the incoming RTP timestamps.
+	*/
+	vfd_dec->fps.num = vfd_dec->fps.num * 3 / 2;
 
 
 	/* Create decoder channel */
@@ -1751,9 +1757,12 @@ PJ_DEF(pj_status_t) pjmedia_vid_stream_create(
 		char trace_name[PJ_MAXPATH];
 		pj_ssize_t len;
 
-		pj_ansi_snprintf(trace_name, sizeof(trace_name), 
+		//pj_ansi_snprintf(trace_name, sizeof(trace_name), 
+		//	TRACE_JB_PATH_PREFIX "%s.csv",
+		//	channel->port.info.name.ptr);
+		pj_ansi_snprintf(trace_name, sizeof(trace_name), // POPOV: try it
 			TRACE_JB_PATH_PREFIX "%s.csv",
-			channel->port.info.name.ptr);
+			stream->dec->port.info.name.ptr);
 		status = pj_file_open(pool, trace_name, PJ_O_RDWR,
 			&stream->trace_jb_fd);
 		if (status != PJ_SUCCESS) {
@@ -2477,13 +2486,13 @@ PJ_DEF(pj_status_t) pjmedia_vid_stream_send_rtcp_bye(
 }
 
 /*
- * Initialize the video stream rate control with default settings.
- */
+* Initialize the video stream rate control with default settings.
+*/
 PJ_DEF(void)
 pjmedia_vid_stream_rc_config_default(pjmedia_vid_stream_rc_config *cfg)
 {
-    pj_bzero(cfg, sizeof(*cfg));
-    cfg->method = PJMEDIA_VID_STREAM_RC_SIMPLE_BLOCKING;
+	pj_bzero(cfg, sizeof(*cfg));
+	cfg->method = PJMEDIA_VID_STREAM_RC_SIMPLE_BLOCKING;
 }
 
 

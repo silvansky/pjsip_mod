@@ -124,6 +124,8 @@ PJ_DEF(void) pjmedia_format_init_video( pjmedia_format *fmt,
 	fmt->det.vid.fps.denum = fps_denum;
 	fmt->det.vid.avg_bps = fmt->det.vid.max_bps = 0;
 
+	//fmt->det.user[0] = 0; // POPOV: this is hell
+
 	if (pjmedia_video_format_mgr_instance()) {
 		const pjmedia_video_format_info *vfi;
 		pjmedia_video_apply_fmt_param vafp;

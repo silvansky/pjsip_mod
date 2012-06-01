@@ -1,4 +1,4 @@
-/* $Id: pjsua_internal.h 3982 2012-03-22 09:56:52Z bennylp $ */
+/* $Id: pjsua_internal.h 4145 2012-05-22 23:13:22Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -136,6 +136,10 @@ struct pjsua_call
 
     unsigned		 med_cnt;   /**< Number of media in SDP.	    */
     pjsua_call_media     media[PJSUA_MAX_CALL_MEDIA]; /**< Array of media   */
+    unsigned		 med_prov_cnt;/**< Number of provisional media.	    */
+    pjsua_call_media	 media_prov[PJSUA_MAX_CALL_MEDIA];
+				    /**< Array of provisional media.	    */
+
     int			 audio_idx; /**< First active audio media.	    */
     pj_mutex_t          *med_ch_mutex;/**< Media channel callback's mutex.  */
     pjsua_med_tp_state_cb   med_ch_cb;/**< Media channel callback.	    */
@@ -357,6 +361,16 @@ typedef struct pjsua_vid_win
     pj_bool_t			 is_native; 	/**< Preview is by dev  */
 } pjsua_vid_win;
 
+
+typedef struct pjsua_timer_list
+{
+    PJ_DECL_LIST_MEMBER(struct pjsua_timer_list);
+    pj_timer_entry         entry;
+    void                  (*cb)(void *user_data);
+    void                   *user_data;
+} pjsua_timer_list;
+
+
 /**
  * Global pjsua application data.
  */
@@ -459,13 +473,7 @@ struct pjsua_data
 #endif
 
     /* Timer entry list */
-    struct timer_list
-    {
-        PJ_DECL_LIST_MEMBER(struct timer_list);
-        pj_timer_entry          entry;
-        void                  (*cb)(void *user_data);
-        void                   *user_data;
-    } timer_list;
+    pjsua_timer_list	 timer_list;
     pj_mutex_t          *timer_mutex;
 };
 
@@ -602,6 +610,8 @@ pj_status_t pjsua_call_media_init(pjsua_call_media *call_med,
                                   pj_bool_t async,
                                   pjsua_med_tp_state_cb cb);
 void pjsua_set_media_tp_state(pjsua_call_media *call_med, pjsua_med_tp_st tp_st);
+
+void pjsua_media_prov_clean_up(pjsua_call_id call_id);
 
 /* Callback to receive media events */
 pj_status_t call_media_on_event(pjmedia_event *event,
@@ -759,6 +769,7 @@ pj_status_t pjsua_aud_channel_update(pjsua_call_media *call_med,
                                      pjmedia_stream_info *si,
 				     const pjmedia_sdp_session *local_sdp,
 				     const pjmedia_sdp_session *remote_sdp);
+void pjsua_check_snd_dev_idle();
 
 /*
  * Video

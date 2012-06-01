@@ -509,9 +509,9 @@ PJ_DEF(pj_status_t) pj_sock_socket(int af,
 
 		// POPOV: setting socket buffers
 		//iOptVal = 2097152;
-		//iOptVal = 65536;
-		//retOpt = setsockopt(*sock, SOL_SOCKET, SO_SNDBUF, (char*)&iOptVal, iOptLen);
-		//retOpt = setsockopt(*sock, SOL_SOCKET, SO_RCVBUF, (char*)&iOptVal, iOptLen);
+		iOptVal = 65536;
+		retOpt = setsockopt(*sock, SOL_SOCKET, PJ_SO_SNDBUF, (char*)&iOptVal, iOptLen);
+		retOpt = setsockopt(*sock, SOL_SOCKET, PJ_SO_RCVBUF, (char*)&iOptVal, iOptLen);
 
 
 		// POPOV: for debug

@@ -1352,7 +1352,8 @@ static pj_status_t dshow_stream_pause(pjmedia_vid_dev_stream *strm)
 	stream->cap_thread_exited = PJ_FALSE;
 	stream->rend_thread_exited = PJ_FALSE;
 
-	hr = IMediaFilter_Pause(stream->dgraph.media_filter);
+	//hr = IMediaFilter_Pause(stream->dgraph.media_filter);
+	hr = IMediaFilter_Stop(stream->dgraph.media_filter);
 	if (FAILED(hr))
 	{
 		char msg[80];

@@ -11,6 +11,7 @@
  */
 #include <pjlib-util/crc32.h>
 
+g_crc_test my_crc_test = {0, 0};
 
 #define CRC32_NEGL  0xffffffffL
 
