@@ -709,6 +709,18 @@ PJ_DECL(pj_status_t) pjmedia_aud_stream_destroy(pjmedia_aud_stream *strm);
 
 
 /**
+ * Temporary stop the stream. // POPOV: pause of the audio stream
+ *
+ * @param strm		The audio stream.
+ *
+ * @return		PJ_SUCCESS on successful operation or the appropriate
+ *			error code.
+ */
+PJ_DECL(pj_status_t) pjmedia_aud_stream_pause(pjmedia_aud_stream *strm);
+
+
+
+/**
  * @}
  */
 

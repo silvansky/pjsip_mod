@@ -828,3 +828,13 @@ PJ_DEF(pj_status_t) pjmedia_aud_stream_destroy(pjmedia_aud_stream *strm)
 }
 
 
+/* API: Pause the audio stream. */ // POPOV
+PJ_DEF(pj_status_t) pjmedia_aud_stream_pause(pjmedia_aud_stream *strm)
+{
+	if(!strm->op->pause)
+		return PJ_ENOTSUP;
+	return strm->op->pause(strm);
+}
+
+
+

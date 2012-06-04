@@ -180,7 +180,8 @@ static pjmedia_aud_stream_op stream_op =
 	&stream_set_cap,
 	&stream_start,
 	&stream_stop,
-	&stream_destroy
+	&stream_destroy,
+	&stream_stop // POPOV: pause the audio stream
 };
 
 

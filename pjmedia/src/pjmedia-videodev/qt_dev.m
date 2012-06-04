@@ -161,7 +161,7 @@ static pjmedia_vid_dev_stream_op stream_op =
     NULL,
     &qt_stream_stop,
     &qt_stream_destroy,
-    &qt_stream_stop
+    &qt_stream_stop // POPOV: local video pause 
 };
 
 

@@ -158,6 +158,11 @@ typedef struct pjmedia_aud_stream_op
 	*/
 	pj_status_t (*destroy)(pjmedia_aud_stream *strm);
 
+	/**
+	* See #pjmedia_aud_stream_pause(). // POPOV: add pause to the stream
+	*/
+	pj_status_t (*pause)(pjmedia_aud_stream *strm);
+
 } pjmedia_aud_stream_op;
 
 

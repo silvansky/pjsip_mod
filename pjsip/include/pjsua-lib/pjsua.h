@@ -4397,6 +4397,18 @@ PJ_DECL(pj_status_t) pjsua_call_set_vid_strm (
 				pjsua_call_vid_strm_op op,
 				const pjsua_call_vid_strm_op_param *param);
 
+/**
+ * POPOV: Change audio stream pause state.
+ * 
+ * @param call_id	Call identification.
+ * @param dir Direction of the stream outgoing or incoming
+ * @param pause New pause state of stream
+ *
+ * @return PJ_SUCCESS on success or the appropriate error.
+ */
+PJ_DECL(pj_status_t) pjsua_aud_stream_pause_state (pjsua_call_id call_id, pjmedia_dir dir, pj_bool_t pause);
+
+
 
 /**
  * Get media stream info for the specified media index.
