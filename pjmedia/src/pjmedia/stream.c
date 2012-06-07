@@ -2634,6 +2634,27 @@ PJ_DEF(pj_status_t) pjmedia_stream_resume( pjmedia_stream *stream,
 	return PJ_SUCCESS;
 }
 
+
+/*
+* Current pause state
+*/
+PJ_DEF(pj_bool_t) pjmedia_stream_is_pause( pjmedia_stream *stream,
+																				 pjmedia_dir dir)
+{
+	PJ_ASSERT_RETURN(stream, PJ_EINVAL);
+
+	if ((dir & PJMEDIA_DIR_ENCODING) && stream->enc) {
+		return stream->enc->paused;
+	}
+
+	if ((dir & PJMEDIA_DIR_DECODING) && stream->dec) {
+		return stream->dec->paused;
+	}
+
+	return PJ_TRUE;
+}
+
+
 /*
 * Dial DTMF
 */

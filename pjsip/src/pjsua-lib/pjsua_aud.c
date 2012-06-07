@@ -2150,7 +2150,7 @@ PJ_DEF(pj_status_t) pjsua_snd_get_setting( pjmedia_aud_dev_cap cap,
 }
 
 // POPOV: Change audio stream pause state.
-PJ_DECL(pj_status_t) pjsua_aud_stream_pause_state (pjsua_call_id call_id, pjmedia_dir dir, pj_bool_t pause)
+PJ_DECL(pj_status_t) pjsua_aud_stream_pause_state_change (pjsua_call_id call_id, pjmedia_dir dir, pj_bool_t pause)
 {
 	pjsua_call *call;
 	pjmedia_stream *audio_stream;
@@ -2175,6 +2175,32 @@ on_return:
 	PJSUA_UNLOCK();
 
 	return status;
+}
+
+
+// POPOV: Current audio stream pause state.
+PJ_DECL(pj_bool_t) pjsua_aud_stream_pause_state (pjsua_call_id call_id, pjmedia_dir dir)
+{
+	pjsua_call *call;
+	pjmedia_stream *audio_stream;
+	pj_bool_t pause_status = PJ_TRUE;
+
+	PJ_ASSERT_RETURN(call_id>=0 && call_id<(int)pjsua_var.ua_cfg.max_calls, PJ_EINVAL);
+
+	//PJSUA_LOCK();
+
+	if (!pjsua_call_is_active(call_id))
+		goto on_return;
+
+	call = &pjsua_var.calls[call_id];
+	audio_stream = call->media[call->audio_idx].strm.a.stream;
+
+	pause_status = pjmedia_stream_is_pause(audio_stream, dir);
+
+on_return:
+	//PJSUA_UNLOCK();
+
+	return pause_status;
 }
 
 

@@ -4406,8 +4406,17 @@ PJ_DECL(pj_status_t) pjsua_call_set_vid_strm (
  *
  * @return PJ_SUCCESS on success or the appropriate error.
  */
-PJ_DECL(pj_status_t) pjsua_aud_stream_pause_state (pjsua_call_id call_id, pjmedia_dir dir, pj_bool_t pause);
+PJ_DECL(pj_status_t) pjsua_aud_stream_pause_state_change (pjsua_call_id call_id, pjmedia_dir dir, pj_bool_t pause);
 
+/**
+ * POPOV: Current audio stream pause state.
+ * 
+ * @param call_id	Call identification.
+ * @param dir Direction of the stream outgoing or incoming
+ *
+ * @return PJ_TRUE if stream is on pause state. Else return PJ_FALSE.
+ */
+PJ_DECL(pj_bool_t) pjsua_aud_stream_pause_state (pjsua_call_id call_id, pjmedia_dir dir);
 
 
 /**

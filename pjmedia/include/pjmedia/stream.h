@@ -336,6 +336,17 @@ PJ_DECL(pj_status_t) pjmedia_stream_resume(pjmedia_stream *stream,
 					   pjmedia_dir dir);
 
 /**
+ * Current pause state of the individual channel in the stream.
+ *
+ * @param stream	The media channel.
+ * @param dir		Which direction to check.
+ *
+ * @return		PJ_TRUE if the channel on pause state otherwise return PJ_FALSE
+ */
+PJ_DEF(pj_bool_t) pjmedia_stream_is_pause( pjmedia_stream *stream,
+																				 pjmedia_dir dir);
+
+/**
  * Transmit DTMF to this stream. The DTMF will be transmitted uisng
  * RTP telephone-events as described in RFC 2833. This operation is
  * only valid for audio stream.
