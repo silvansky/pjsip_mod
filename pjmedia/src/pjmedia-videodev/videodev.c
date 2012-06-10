@@ -79,6 +79,11 @@ pjmedia_vid_dev_factory* pjmedia_dshow_factory(pj_pool_factory *pf);
 pjmedia_vid_dev_factory* pjmedia_cbar_factory(pj_pool_factory *pf);
 #endif
 
+#if PJMEDIA_VIDEO_DEV_HAS_DCDEV_SRC // POPOV: dummy capture dev
+pjmedia_vid_dev_factory* pjmedia_dcdev_factory(pj_pool_factory *pf);
+#endif
+
+
 #if PJMEDIA_VIDEO_DEV_HAS_SDL
 pjmedia_vid_dev_factory* pjmedia_sdl_factory(pj_pool_factory *pf);
 #endif
@@ -396,6 +401,9 @@ PJ_DEF(pj_status_t) pjmedia_vid_dev_subsys_init(pj_pool_factory *pf)
 #if PJMEDIA_VIDEO_DEV_HAS_CBAR_SRC
 	vid_subsys.drv[vid_subsys.drv_cnt++].create = &pjmedia_cbar_factory;
 #endif
+#if PJMEDIA_VIDEO_DEV_HAS_DCDEV_SRC // POPOV: dummy capture dev
+	vid_subsys.drv[vid_subsys.drv_cnt++].create = &pjmedia_dcdev_factory;
+#endif
 #if PJMEDIA_VIDEO_DEV_HAS_SDL
 	vid_subsys.drv[vid_subsys.drv_cnt++].create = &pjmedia_sdl_factory;
 #endif
@@ -534,6 +542,20 @@ PJ_DEF(unsigned) pjmedia_vid_dev_count(void)
 	return vid_subsys.dev_cnt;
 }
 
+/* API: Get the number of video capture devices installed in the system. */
+PJ_DEF(unsigned) pjmedia_vid_dev_capture_count(void)
+{
+	int i=0;
+	int rend_dev_cnt = 0;
+	for(i; i<vid_subsys.drv_cnt; i++)
+	{
+		struct driver *drv = &vid_subsys.drv[i];
+		if(drv->cap_dev_idx >= 0)
+			rend_dev_cnt ++;
+	}
+	return rend_dev_cnt;
+}
+
 /* Internal: convert local index to global device index */
 static pj_status_t make_global_index(unsigned drv_idx, 
 																		 pjmedia_vid_dev_index *id)
@@ -643,7 +665,11 @@ PJ_DEF(pj_status_t) pjmedia_vid_dev_get_info(pjmedia_vid_dev_index id,
 
 	status = lookup_dev(id, &f, &index);
 	if (status != PJ_SUCCESS)
+	{
+		info->dir = PJMEDIA_DIR_CAPTURE;
+		info->id = PJMEDIA_VID_INVALID_DEV; // POPOV: id of video device is invalid
 		return status;
+	}
 
 	status = f->op->get_dev_info(f, index, info);
 

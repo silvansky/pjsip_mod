@@ -207,6 +207,17 @@ PJ_DEF(unsigned) pjsua_vid_dev_count(void)
 	return pjmedia_vid_dev_count();
 }
 
+
+/*
+* Get the number of video capture devices installed in the system.
+*/
+PJ_DEF(unsigned) pjsua_vid_dev_capture_count(void)
+{
+	return pjmedia_vid_dev_capture_count();
+}
+
+
+
 /*
 * Retrieve the video device info for the specified device index.
 */
@@ -525,7 +536,7 @@ static pj_status_t create_vid_win(pjsua_vid_win_type type,
 		* Determine if the device supports native preview.
 		*/
 		status = pjmedia_vid_dev_get_info(cap_id, &vdi);
-		if (status != PJ_SUCCESS)
+		if (status != PJ_SUCCESS/* && status != PJMEDIA_EVID_INVDEV*/) // POPOV: PJMEDIA_EVID_INVDEV
 			goto on_error;
 
 		if (enable_native_preview &&
@@ -1124,7 +1135,7 @@ pj_status_t pjsua_vid_channel_update(pjsua_call_media *call_med,
 
 			status = pjmedia_vid_dev_get_info(call_med->strm.v.cap_dev,
 				&dev_info);
-			if (status != PJ_SUCCESS)
+			if (status != PJ_SUCCESS/* && status != PJMEDIA_EVID_INVDEV*/)
 				goto on_error;
 
 			/* Find matched format ID */
@@ -2461,28 +2472,38 @@ PJ_DEF(pj_status_t) pjsua_call_set_vid_strm (
 			status = call_change_cap_dev(call, param_.med_idx, param_.cap_dev);
 			break;
 		case PJSUA_CALL_VID_STRM_START_TRANSMIT:
+			if(pjsua_vid_dev_capture_count() > 0)
 			{// POPOV: pjsua_call_set_vid_strm: PJSUA_CALL_VID_STRM_START_TRANSMIT start videoport for camera on
-				pjsua_vid_win *w;
-				pjsua_call_media *call_med;
-				int med_idx = -1;
-				med_idx = pjsua_call_get_vid_stream_idx(call_id);
-				call_med = &call->media[med_idx];
-				w = &pjsua_var.win[call_med->strm.v.cap_win_id];
-				status = pjmedia_vid_port_start(w->vp_cap);
+				{
+					pjsua_vid_win *w;
+					pjsua_call_media *call_med;
+					int med_idx = -1;
+					med_idx = pjsua_call_get_vid_stream_idx(call_id);
+					call_med = &call->media[med_idx];
+					w = &pjsua_var.win[call_med->strm.v.cap_win_id];
+					status = pjmedia_vid_port_start(w->vp_cap);
+				}
+				
 			}
 			status = call_set_tx_video(call, param_.med_idx, PJ_TRUE);
+			
 			break;
 		case PJSUA_CALL_VID_STRM_STOP_TRANSMIT:
 			status = call_set_tx_video(call, param_.med_idx, PJ_FALSE);
-			{// POPOV: pjsua_call_set_vid_strm: PJSUA_CALL_VID_STRM_STOP_TRANSMIT pause videoport for camera off
-				pjsua_vid_win *w;
-				pjsua_call_media *call_med;
-				int med_idx = -1;
-				med_idx = pjsua_call_get_vid_stream_idx(call_id);
-				call_med = &call->media[med_idx];
-				w = &pjsua_var.win[call_med->strm.v.cap_win_id];
-				status = pjmedia_vid_port_pause(w->vp_cap);
+			if(pjsua_vid_dev_capture_count() > 0)
+			{
+				
+				{// POPOV: pjsua_call_set_vid_strm: PJSUA_CALL_VID_STRM_STOP_TRANSMIT pause videoport for camera off
+					pjsua_vid_win *w;
+					pjsua_call_media *call_med;
+					int med_idx = -1;
+					med_idx = pjsua_call_get_vid_stream_idx(call_id);
+					call_med = &call->media[med_idx];
+					w = &pjsua_var.win[call_med->strm.v.cap_win_id];
+					status = pjmedia_vid_port_pause(w->vp_cap);
+				}
 			}
+
 			break;
 		case PJSUA_CALL_VID_STRM_SEND_KEYFRAME:
 			status = call_send_vid_keyframe(call, param_.med_idx);

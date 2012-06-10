@@ -5975,6 +5975,13 @@ pjsua_media_transports_attach( pjsua_media_transport tp[],
 PJ_DECL(unsigned) pjsua_vid_dev_count(void);
 
 /**
+ * Get the number of video capture devices installed in the system.
+ *
+ * @return		The number of devices.
+ */
+PJ_DEF(unsigned) pjsua_vid_dev_capture_count(void);
+
+/**
  * Retrieve the video device info for the specified device index.
  *
  * @param id		The device index.

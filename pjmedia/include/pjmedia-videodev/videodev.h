@@ -632,6 +632,14 @@ PJ_DECL(unsigned) pjmedia_vid_dev_count(void);
 
 
 /**
+ * POPOV: Get the number of video capture devices installed in the system.
+ *
+ * @return          The number of video capture devices installed in the system.
+ */
+PJ_DEF(unsigned) pjmedia_vid_dev_capture_count(void);
+
+
+/**
  * Get device information.
  *
  * @param id        The video device ID.

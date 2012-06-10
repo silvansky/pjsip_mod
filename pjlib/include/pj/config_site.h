@@ -62,7 +62,8 @@
 #define PJ_DEBUG							0
 //#define PJ_LOG_MAX_LEVEL					6
 
-
+#define PJMEDIA_VIDEO_DEV_HAS_CBAR_SRC      0
+#define PJMEDIA_VIDEO_DEV_HAS_DCDEV_SRC     1
 
 
 

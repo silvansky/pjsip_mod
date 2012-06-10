@@ -2894,6 +2894,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\src\pjmedia-videodev\dummy_capture_dev.c"
+				>
+			</File>
+			<File
 				RelativePath="..\src\pjmedia-videodev\errno.c"
 				>
 			</File>

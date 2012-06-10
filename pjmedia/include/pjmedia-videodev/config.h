@@ -104,6 +104,17 @@ PJ_BEGIN_DECL
 
 
 /**
+ * POPOV: This setting controls whether dummy capture source support should be included.
+ *
+ * Default: 1
+ */
+#ifndef PJMEDIA_VIDEO_DEV_HAS_DCDEV_SRC
+#   define PJMEDIA_VIDEO_DEV_HAS_DCDEV_SRC	0
+#endif
+
+
+
+/**
  * This setting controls whether ffmpeg support should be included.
  *
  * Default: 0 (unfinished)
