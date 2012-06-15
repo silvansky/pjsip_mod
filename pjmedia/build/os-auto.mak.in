@@ -163,6 +163,11 @@ export PJMEDIA_VIDEODEV_OBJS += qt_dev.o
 endif
 
 #
+# DUMMY video device
+#
+export PJMEDIA_VIDEODEV_OBJS += dummy_capture_dev.o
+
+#
 # iOS video device
 #
 ifeq ($(AC_PJMEDIA_VIDEO),iphone_os)
