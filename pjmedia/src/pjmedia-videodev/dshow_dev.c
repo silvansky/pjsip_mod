@@ -432,8 +432,10 @@ static pj_status_t dshow_factory_refresh(pjmedia_vid_dev_factory *f)
 				{
 					WCHAR *wszDisplayName = NULL;
 					IBaseFilter *filter;
+					int currDev = df->dev_count; // POPOV
 
-					ddi = &df->dev_info[df->dev_count++];
+					ddi = &df->dev_info[currDev];
+					//ddi = &df->dev_info[df->dev_count++];
 					pj_bzero(ddi, sizeof(*ddi));
 					pj_unicode_to_ansi(var_name.bstrVal, wcslen(var_name.bstrVal), ddi->info.name, sizeof(ddi->info.name));
 
@@ -452,7 +454,8 @@ static pj_status_t dshow_factory_refresh(pjmedia_vid_dev_factory *f)
 					/* Set the device capabilities here */
 					ddi->info.caps = PJMEDIA_VID_DEV_CAP_FORMAT;
 
-					hr = get_cap_device(df, df->dev_count-1, &filter);
+					//hr = get_cap_device(df, df->dev_count-1, &filter);
+					hr = get_cap_device(df, currDev, &filter);
 					if (SUCCEEDED(hr))
 					{
 						unsigned j;
@@ -472,6 +475,8 @@ static pj_status_t dshow_factory_refresh(pjmedia_vid_dev_factory *f)
 								DEFAULT_WIDTH, DEFAULT_HEIGHT, 
 								DEFAULT_FPS, 1);
 						}
+
+						df->dev_count++;
 					}
 				}
 				VariantClear(&var_name);
