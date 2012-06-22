@@ -2094,8 +2094,8 @@ static void stop_media_session(pjsua_call_id call_id)
 		}
 	}
 
-	if (pjsua_var.ua_cfg.cb.on_call_state)
-		(*pjsua_var.ua_cfg.cb.on_call_state)(call_id, NULL);
+	if (pjsua_var.ua_cfg.cb.on_call_media_state)
+		(*pjsua_var.ua_cfg.cb.on_call_media_state)(call_id);
 
 	pj_log_pop_indent();
 }
