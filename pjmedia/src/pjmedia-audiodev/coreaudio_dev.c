@@ -32,6 +32,7 @@
 
 #include <AudioUnit/AudioUnit.h>
 #include <AudioToolbox/AudioConverter.h>
+#include <CoreAudio/CoreAudio.h>
 #if !COREAUDIO_MAC
     #include <AudioToolbox/AudioServices.h>
 
