@@ -1316,7 +1316,8 @@ pj_status_t pjsua_vid_channel_update(pjsua_call_media *call_med,
 
 	}
 
-	if (!acc->cfg.vid_out_auto_transmit && call_med->strm.v.stream) {
+//	if (!acc->cfg.vid_out_auto_transmit && call_med->strm.v.stream) {
+	if ((!acc->cfg.vid_out_auto_transmit || pjsua_vid_dev_capture_count() == 0) && call_med->strm.v.stream) { // POPOV: add control of video capture device
 
 
 		status = pjmedia_vid_stream_pause(call_med->strm.v.stream,

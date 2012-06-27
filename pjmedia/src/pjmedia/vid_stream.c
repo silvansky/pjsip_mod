@@ -85,6 +85,7 @@ typedef struct pjmedia_vid_channel
 	void		   *buf;	    /**< Output buffer.		    */
 	unsigned		    buf_size;	    /**< Size of output buffer.	    */
 	pjmedia_rtp_session	    rtp;	    /**< RTP session.		    */
+	//pj_bool_t       ka_state; /** Is stream on keep alive state*/ // POPOV
 } pjmedia_vid_channel;
 
 
@@ -436,8 +437,10 @@ static void send_keep_alive_packet(pjmedia_vid_stream *stream)
 	void *pkt;
 	int pkt_len;
 
-	TRC_((channel->port.info.name.ptr,
-		"Sending keep-alive (RTCP and empty RTP)"));
+	TRC_((stream->enc->port.info.name.ptr, "Sending keep-alive (RTCP and empty RTP)"));
+
+	//TRC_((channel->port.info.name.ptr,
+		//"Sending keep-alive (RTCP and empty RTP)"));
 
 	/* Send RTP */
 	status = pjmedia_rtp_encode_rtp( &stream->enc->rtp,
@@ -890,7 +893,8 @@ static pj_status_t put_frame(pjmedia_port *port, pjmedia_frame *frame)
 		pj_uint32_t dtx_duration;
 
 		dtx_duration = pj_timestamp_diff32(&stream->last_frm_ts_sent, &frame->timestamp);
-		if (dtx_duration > PJMEDIA_STREAM_KA_INTERVAL * channel->port.info.clock_rate)
+		//if (dtx_duration > PJMEDIA_STREAM_KA_INTERVAL * channel->port.info.clock_rate)
+		if (dtx_duration > PJMEDIA_STREAM_KA_INTERVAL * stream->info.codec_info.clock_rate) // POPOV
 		{
 			send_keep_alive_packet(stream);
 			stream->last_frm_ts_sent = frame->timestamp;
@@ -2030,6 +2034,29 @@ PJ_DEF(pj_bool_t) pjmedia_vid_stream_is_running(pjmedia_vid_stream *stream,
 
 	return is_running;
 }
+
+/*
+* Check keep alive state of the stream
+*/
+PJ_DEF(pj_bool_t) pjmedia_vid_stream_is_onKAstate(pjmedia_vid_stream *stream,
+																								pjmedia_dir dir)
+{
+	pj_bool_t is_running = PJ_TRUE;
+
+	//PJ_ASSERT_RETURN(stream, PJ_FALSE);
+
+	//if (dir & PJMEDIA_DIR_ENCODING)
+	//{
+	//	is_running &= (stream->enc && !stream->enc->paused && );
+	//}
+
+	//if (dir & PJMEDIA_DIR_DECODING) {
+	//	is_running &= (stream->dec && !stream->dec->paused);
+	//}
+
+	return is_running;
+}
+
 
 /*
 * Pause stream.

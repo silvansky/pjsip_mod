@@ -207,8 +207,7 @@ static pj_status_t dcdev_factory_init(pjmedia_vid_dev_factory *f)
 			DEFAULT_FPS, 1);
 	}
 
-	PJ_LOG(4, (THIS_FILE, "Dummy capture video src initialized with %d device(s):",
-		cf->dev_count));
+	PJ_LOG(4, (THIS_FILE, "Dummy capture video src initialized with %d device(s):", cf->dev_count));
 	for (i = 0; i < cf->dev_count; i++) {
 		PJ_LOG(4, (THIS_FILE, "%2d: %s", i, cf->dev_info[i].info.name));
 	}

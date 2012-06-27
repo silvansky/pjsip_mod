@@ -546,14 +546,27 @@ PJ_DEF(unsigned) pjmedia_vid_dev_count(void)
 PJ_DEF(unsigned) pjmedia_vid_dev_capture_count(void)
 {
 	int i=0;
-	int rend_dev_cnt = 0;
+	int j=0;
+	int capt_dev_cnt = 0;
 	for(i; i<vid_subsys.drv_cnt; i++)
 	{
+		pjmedia_vid_dev_info info;
 		struct driver *drv = &vid_subsys.drv[i];
-		if(drv->cap_dev_idx >= 0)
-			rend_dev_cnt ++;
+		//if(drv->cap_dev_idx >= 0)
+		//	capt_dev_cnt ++;
+
+		for(j=0; j<drv->dev_cnt; j++)
+			if(drv && drv->f && drv->f->op)
+			{
+				drv->f->op->get_dev_info(drv->f, j, &info);
+				if( (info.dir & PJMEDIA_DIR_ENCODING) && strcmp(info.driver, "DummyCapture") != 0)
+				{
+					capt_dev_cnt ++;
+				}
+			}
+
 	}
-	return rend_dev_cnt;
+	return capt_dev_cnt;
 }
 
 /* Internal: convert local index to global device index */
