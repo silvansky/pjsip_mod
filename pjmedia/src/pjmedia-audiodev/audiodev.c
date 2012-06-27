@@ -317,10 +317,12 @@ static pj_status_t init_driver(unsigned drv_idx, pj_bool_t refresh)
 
 		if (drv->play_dev_idx < 0 && info.output_count) {
 			/* Set default playback device */
+			PJ_LOG(1, (THIS_FILE, "*** selecting play device: %d", i));
 			drv->play_dev_idx = i;
 		}
 		if (drv->rec_dev_idx < 0 && info.input_count) {
 			/* Set default capture device */
+			PJ_LOG(1, (THIS_FILE, "*** selecting rec device: %d", i));
 			drv->rec_dev_idx = i;
 		}
 		if (drv->dev_idx < 0 && info.input_count &&

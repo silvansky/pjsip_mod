@@ -445,24 +445,28 @@ static pj_status_t ca_factory_refresh(pjmedia_aud_dev_factory *f)
 	ostatus = AudioObjectGetPropertyData(kAudioObjectSystemObject,
 					     &addr, 0, NULL,
 					     &size, (void *)&dev_id);
-	if (ostatus != noErr && dev_id != dev_ids[idx]) {
+	if (ostatus == noErr && dev_id != dev_ids[idx]) {
 	    AudioDeviceID temp_id = dev_ids[idx];
+        PJ_LOG(1, (THIS_FILE, "*** temp_id: %d, idx: %d, dev_id: %d", temp_id, idx, dev_id));
 	    
 	    for (i = idx + 1; i < dev_size; i++) {
 		if (dev_ids[i] == dev_id) {
+            fprintf(stdout, "*** swap: i=%d\n", i);
 		    dev_ids[idx++] = dev_id;
 		    dev_ids[i] = temp_id;
 		    break;
 		}
 	    }
-	}
+	} else {
+        PJ_LOG(1, (THIS_FILE, "*** FAILED to get Default Input Device! status: %d, dev_id: %d, dev_ids[idx]: %d", ostatus, dev_id, dev_ids[idx]));
+    }
 
 	/* Find default audio output device */
 	addr.mSelector = kAudioHardwarePropertyDefaultOutputDevice;	
 	ostatus = AudioObjectGetPropertyData(kAudioObjectSystemObject,
 					     &addr, 0, NULL,
 					     &size, (void *)&dev_id);
-	if (ostatus != noErr && dev_id != dev_ids[idx]) {
+	if (ostatus == noErr && dev_id != dev_ids[idx]) {
 	    AudioDeviceID temp_id = dev_ids[idx];
 	    
 	    for (i = idx + 1; i < dev_size; i++) {
