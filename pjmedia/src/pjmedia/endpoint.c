@@ -45,6 +45,7 @@ static const pj_str_t STR_SENDRECV = { "sendrecv", 8 };
 
 
 
+
 /* Config to control rtpmap inclusion for static payload types */
 pj_bool_t pjmedia_add_rtpmap_for_static_pt = 
 PJMEDIA_ADD_RTPMAP_FOR_STATIC_PT;
