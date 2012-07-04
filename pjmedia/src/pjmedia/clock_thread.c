@@ -1,4 +1,4 @@
-/* $Id: clock_thread.c 3854 2011-10-25 12:12:44Z bennylp $ */
+/* $Id: clock_thread.c 4106 2012-04-26 23:47:05Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -83,7 +83,7 @@ pjmedia_clock_src_get_time_msec( const pjmedia_clock_src *clocksrc )
     pjmedia_clock_src_get_current_timestamp(clocksrc, &ts);
 
 #if PJ_HAS_INT64
-    if (ts.u64 > 0x3FFFFFFFFFFFFFUL)
+    if (ts.u64 > PJ_UINT64(0x3FFFFFFFFFFFFF))
         return (pj_uint32_t)(ts.u64 / clocksrc->clock_rate * 1000);
     else
         return (pj_uint32_t)(ts.u64 * 1000 / clocksrc->clock_rate);

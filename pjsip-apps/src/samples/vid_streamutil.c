@@ -1,4 +1,4 @@
-/* $Id: vid_streamutil.c 4055 2012-04-16 09:44:25Z nanang $ */
+/* $Id: vid_streamutil.c 4084 2012-04-25 07:13:05Z ming $ */
 /* 
  * Copyright (C) 2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -890,6 +890,12 @@ int main(int argc, char *argv[])
 
     /* Start deinitialization: */
 on_exit:
+
+    /* Stop video devices */
+    if (capture)
+        pjmedia_vid_port_stop(capture);
+    if (renderer)
+        pjmedia_vid_port_stop(renderer);
 
     /* Stop and destroy file clock */
     if (play_clock) {

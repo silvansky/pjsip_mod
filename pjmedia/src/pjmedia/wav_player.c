@@ -1,4 +1,4 @@
-/* $Id: wav_player.c 4031 2012-04-09 07:15:45Z nanang $ */
+/* $Id: wav_player.c 4122 2012-05-14 11:04:46Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -157,6 +157,7 @@ static pj_status_t fill_buffer(struct file_reader_port *fport)
                     int val = pjmedia_linear2alaw(0);
                     pj_memset(fport->eofpos, val, size_left);
                 }
+		size_left = 0;
             }
 
 	    /* Rewind file */

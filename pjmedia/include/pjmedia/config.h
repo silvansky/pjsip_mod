@@ -1,4 +1,4 @@
-/* $Id: config.h 4006 2012-04-02 08:40:54Z nanang $ */
+/* $Id: config.h 4130 2012-05-17 08:35:51Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -1136,7 +1136,7 @@
 
 /**
  * Duration for progressive discard algotithm in jitter buffer to discard
- * an excessive frame when burst is equal to or lower than
+ * an excessive frame when burst is equal to or greater than
  * PJMEDIA_JBUF_PRO_DISC_MAX_BURST, in milliseconds.
  *
  * Default: 10000 ms

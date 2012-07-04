@@ -1798,9 +1798,9 @@ static pj_status_t x264_codec_decode( pjmedia_vid_codec *codec,
 
 #ifdef _MSC_VER
 	#ifdef NDEBUG
-	#   pragma comment( lib, "libx264-120.lib")
+	#   pragma comment( lib, "libx264-125.lib")
 	#else
-	#   pragma comment( lib, "libx264d-120.lib")
+	#   pragma comment( lib, "libx264d-125.lib")
 	#endif
 //#   pragma comment( lib, "avcodec.lib")
 //#   pragma comment( lib, "avformat.lib")

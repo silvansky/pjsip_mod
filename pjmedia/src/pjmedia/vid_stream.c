@@ -1,4 +1,4 @@
-/* $Id: vid_stream.c 4059 2012-04-17 07:18:52Z bennylp $ */
+/* $Id: vid_stream.c 4123 2012-05-14 11:17:31Z ming $ */
 /* 
 * Copyright (C) 2011 Teluu Inc. (http://www.teluu.com)
 *
@@ -71,6 +71,13 @@ for the CSV filename.    */
 #   define PJMEDIA_VSTREAM_INC	1000
 #endif
 
+/* Video stream keep-alive feature is currently disabled. */ // POPOV: nahera?
+//#if defined(PJMEDIA_STREAM_ENABLE_KA) && PJMEDIA_STREAM_ENABLE_KA != 0
+//#   undef PJMEDIA_STREAM_ENABLE_KA
+//#   define PJMEDIA_STREAM_ENABLE_KA 0
+//#endif
+
+
 
 /**
 * Media channel.
@@ -130,6 +137,7 @@ struct pjmedia_vid_stream
 	/**< Outgoing RTCP packet size. */
 
 	unsigned		     dec_max_size;  /**< Size of decoded/raw picture*/
+	pjmedia_ratio	     dec_max_fps;   /**< Max fps of decoding dir.   */
 	pjmedia_frame            dec_frame;	    /**< Current decoded frame.     */
 	pjmedia_event            fmt_event;	    /**< Buffered fmt_changed event
 																					to avoid deadlock	    */
@@ -433,6 +441,7 @@ static void send_keep_alive_packet(pjmedia_vid_stream *stream)
 #if PJMEDIA_STREAM_ENABLE_KA == PJMEDIA_STREAM_KA_EMPTY_RTP
 
 	/* Keep-alive packet is empty RTP */
+	pjmedia_vid_channel *channel = stream->enc;
 	pj_status_t status;
 	void *pkt;
 	int pkt_len;
@@ -456,11 +465,12 @@ static void send_keep_alive_packet(pjmedia_vid_stream *stream)
 		pkt_len);
 
 	/* Send RTCP */
-	send_rtcp(stream, PJ_TRUE, PJ_FALSE, PJ_FALSE);
+	send_rtcp(stream, PJ_TRUE, PJ_FALSE);
 
 #elif PJMEDIA_STREAM_ENABLE_KA == PJMEDIA_STREAM_KA_USER
 
 	/* Keep-alive packet is defined in PJMEDIA_STREAM_KA_USER_PKT */
+	pjmedia_vid_channel *channel = stream->enc;
 	int pkt_len;
 	const pj_str_t str_ka = PJMEDIA_STREAM_KA_USER_PKT;
 
@@ -503,7 +513,7 @@ static pj_status_t send_rtcp(pjmedia_vid_stream *stream,
 		pj_memcpy(pkt, sr_rr_pkt, len);
 		max_len = stream->out_rtcp_pkt_size;
 	} else {
-		pkt = sr_rr_pkt;
+		pkt = (pj_uint8_t*)sr_rr_pkt;
 		max_len = len;
 	}
 
@@ -894,11 +904,17 @@ static pj_status_t put_frame(pjmedia_port *port, pjmedia_frame *frame)
 
 		dtx_duration = pj_timestamp_diff32(&stream->last_frm_ts_sent, &frame->timestamp);
 		//if (dtx_duration > PJMEDIA_STREAM_KA_INTERVAL * channel->port.info.clock_rate)
-		if (dtx_duration > PJMEDIA_STREAM_KA_INTERVAL * stream->info.codec_info.clock_rate) // POPOV
-		{
-			send_keep_alive_packet(stream);
-			stream->last_frm_ts_sent = frame->timestamp;
-		}
+		//if (dtx_duration > PJMEDIA_STREAM_KA_INTERVAL * stream->info.codec_info.clock_rate) // POPOV
+    /* Video stream keep-alive feature is currently disabled. */ // POPOV: nahera?
+    // Enable Keep alive
+      if (dtx_duration >
+				PJMEDIA_STREAM_KA_INTERVAL *
+            PJMEDIA_PIA_SRATE(&channel->port.info))
+			{
+				send_keep_alive_packet(stream);
+				stream->last_frm_ts_sent = frame->timestamp;
+			}
+		
 	}
 #endif
 
@@ -1192,9 +1208,9 @@ static pj_status_t decode_frame(pjmedia_vid_stream *stream, pjmedia_frame *frame
 	//////////		if (stream->info.codec_info.clock_rate * vfd->fps.denum !=
 	//////////			vfd->fps.num * ts_diff)
 	//////////		{
-	//////////			pjmedia_ratio old_fps;
+	//////////			//pjmedia_ratio old_fps;
 
-	//////////			old_fps = vfd->fps;
+	//////////			//old_fps = vfd->fps;
 
 	//////////			/* Frame rate changed, update decoding port info */
 	//////////			if (stream->info.codec_info.clock_rate % ts_diff == 0) {
@@ -1211,10 +1227,17 @@ static pj_status_t decode_frame(pjmedia_vid_stream *stream, pjmedia_frame *frame
 	//////////			/* Publish PJMEDIA_EVENT_FMT_CHANGED event if frame rate
 	//////////			* increased and not exceeding 100fps.
 	//////////			*/
-	//////////			if (vfd->fps.num/vfd->fps.denum < 100 &&
-	//////////				vfd->fps.num*old_fps.denum > old_fps.num*vfd->fps.denum)
+	//////////			//if (vfd->fps.num/vfd->fps.denum < 100 &&
+	//////////			//	vfd->fps.num*old_fps.denum > old_fps.num*vfd->fps.denum)
+	//////////      if (vfd->fps.num/vfd->fps.denum <= 100 &&
+	//////////	      vfd->fps.num * stream->dec_max_fps.denum >
+	//////////	      stream->dec_max_fps.num * vfd->fps.denum)
 	//////////			{
 	//////////				pjmedia_event *event = &stream->fmt_event;
+
+	//////////        /* Update max fps of decoding dir */
+	//////////        stream->dec_max_fps = vfd->fps;
+
 
 	//////////				/* Use the buffered format changed event:
 	//////////				* - just update the framerate if there is pending event,
@@ -1643,7 +1666,7 @@ PJ_DEF(pj_status_t) pjmedia_vid_stream_create(
 	* will be continuously calculated based on the incoming RTP timestamps.
 	*/
 	vfd_dec->fps.num = vfd_dec->fps.num * 3 / 2;
-
+	stream->dec_max_fps = vfd_dec->fps;
 
 	/* Create decoder channel */
 	status = create_channel( pool, stream, PJMEDIA_DIR_DECODING, info->rx_pt, info, &stream->dec);

@@ -1,4 +1,4 @@
-/* $Id: vid_dev_test.c 4049 2012-04-13 06:24:23Z ming $ */
+/* $Id: vid_dev_test.c 4084 2012-04-25 07:13:05Z ming $ */
 /*
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -190,6 +190,10 @@ on_return:
     if (status != PJ_SUCCESS)
 	PJ_PERROR(3, (THIS_FILE, status, "   error"));
 
+    if (capture)
+        pjmedia_vid_port_stop(capture);
+    if (renderer)
+        pjmedia_vid_port_stop(renderer);
     if (capture)
 	pjmedia_vid_port_destroy(capture);
     if (renderer) {

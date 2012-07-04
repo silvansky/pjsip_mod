@@ -1,4 +1,4 @@
-/* $Id: conf_switch.c 3999 2012-03-30 07:10:13Z bennylp $ */
+/* $Id: conf_switch.c 4122 2012-05-14 11:04:46Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -546,7 +546,7 @@ PJ_DEF(pj_status_t) pjmedia_conf_connect_port( pjmedia_conf *conf,
     /* Channel count must match. */
     if (src_afd->channel_count != dst_afd->channel_count) {
 	pj_mutex_unlock(conf->mutex);
-	return PJMEDIA_ENCCLOCKRATE;
+	return PJMEDIA_ENCCHANNEL;
     }
 
     /* Source and sink ptime must be equal or a multiplication factor. */

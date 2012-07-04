@@ -1,4 +1,4 @@
-/* $Id: avi_dev.c 4047 2012-04-13 04:59:05Z ming $ */
+/* $Id: avi_dev.c 4086 2012-04-26 02:44:41Z ming $ */
 /*
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -24,7 +24,8 @@
 #include <pj/rand.h>
 #include <pjmedia/vid_codec.h>
 
-#if defined(PJMEDIA_VIDEO_DEV_HAS_AVI) && PJMEDIA_VIDEO_DEV_HAS_AVI != 0
+#if defined(PJMEDIA_VIDEO_DEV_HAS_AVI) && PJMEDIA_VIDEO_DEV_HAS_AVI != 0 && \
+    defined(PJMEDIA_HAS_VIDEO) && (PJMEDIA_HAS_VIDEO != 0)
 
 #define THIS_FILE		"avi_dev.c"
 #define DRIVER_NAME		"AVIDev"
@@ -131,8 +132,7 @@ static pjmedia_vid_dev_stream_op stream_op =
     &avi_dev_strm_get_frame,
     NULL,
     &avi_dev_strm_stop,
-    &avi_dev_strm_destroy,
-		NULL
+    &avi_dev_strm_destroy
 };
 
 

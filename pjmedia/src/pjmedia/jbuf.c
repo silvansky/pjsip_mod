@@ -1,4 +1,4 @@
-/* $Id: jbuf.c 3874 2011-10-28 05:08:54Z bennylp $ */
+/* $Id: jbuf.c 4100 2012-04-26 16:57:47Z nanang $ */
 /* 
 * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
 * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -167,7 +167,7 @@ struct pjmedia_jbuf
 /* Enabling this would log the jitter buffer state about once per 
 * second.
 */
-#if 0
+#if 1
 #  define TRACE__(args)	    PJ_LOG(5,args)
 #else
 #  define TRACE__(args)

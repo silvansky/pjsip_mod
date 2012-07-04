@@ -1,4 +1,4 @@
-/* $Id: vid_codec_test.c 4049 2012-04-13 06:24:23Z ming $ */
+/* $Id: vid_codec_test.c 4084 2012-04-25 07:13:05Z ming $ */
 /* 
  * Copyright (C) 2011 Teluu Inc. (http://www.teluu.com)
  *
@@ -417,14 +417,14 @@ on_return:
     if (status != PJ_SUCCESS) {
         PJ_PERROR(3, (THIS_FILE, status, "  error"));
     }
-    if (capture) {
+    if (capture)
         pjmedia_vid_port_stop(capture);
-	pjmedia_vid_port_destroy(capture);
-    }
-    if (renderer) {
+    if (renderer)
         pjmedia_vid_port_stop(renderer);
+    if (capture)
+	pjmedia_vid_port_destroy(capture);
+    if (renderer)
 	pjmedia_vid_port_destroy(renderer);
-    }
     if (codec) {
 	pjmedia_event_unsubscribe(NULL, &codec_on_event, &codec_port_data,
                                   codec);

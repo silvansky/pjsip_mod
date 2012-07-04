@@ -1,4 +1,4 @@
-/* $Id: stream.c 3999 2012-03-30 07:10:13Z bennylp $ */
+/* $Id: stream.c 4120 2012-05-12 07:18:09Z ming $ */
 /* 
 * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
 * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -943,7 +943,7 @@ static pj_status_t send_rtcp(pjmedia_stream *stream,
 		pj_memcpy(pkt, sr_rr_pkt, len);
 		max_len = stream->out_rtcp_pkt_size;
 	} else {
-		pkt = sr_rr_pkt;
+		pkt = (pj_uint8_t*)sr_rr_pkt;
 		max_len = len;
 	}
 
@@ -961,7 +961,7 @@ static pj_status_t send_rtcp(pjmedia_stream *stream,
 			PJ_PERROR(4,(stream->port.info.name.ptr, status,
 				"Error generating RTCP SDES"));
 		} else {
-			len += sdes_len;
+			len += (int)sdes_len;
 		}
 	}
 
@@ -1019,7 +1019,7 @@ static pj_status_t send_rtcp(pjmedia_stream *stream,
 			PJ_PERROR(4,(stream->port.info.name.ptr, status,
 				"Error generating RTCP BYE"));
 		} else {
-			len += bye_len;
+			len += (int)bye_len;
 		}
 	}
 
@@ -1165,8 +1165,9 @@ static pj_status_t put_frame_imp( pjmedia_port *port,
 		dtx_duration = pj_timestamp_diff32(&stream->last_frm_ts_sent, 
 			&frame->timestamp);
 		if (dtx_duration >
+			PJMEDIA_STREAM_KA_INTERVAL * PJMEDIA_PIA_SRATE(&stream->port.info))
 			//PJMEDIA_STREAM_KA_INTERVAL * stream->port.info.clock_rate)
-			PJMEDIA_STREAM_KA_INTERVAL * stream->codec_param.info.clock_rate) // POPOV
+			//PJMEDIA_STREAM_KA_INTERVAL * stream->codec_param.info.clock_rate) // POPOV
 		{
 			send_keep_alive_packet(stream);
 			stream->last_frm_ts_sent = frame->timestamp;

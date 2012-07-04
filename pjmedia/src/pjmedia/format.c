@@ -1,4 +1,4 @@
-/* $Id: format.c 3953 2012-02-16 08:49:33Z ming $ */
+/* $Id: format.c 4087 2012-04-26 03:39:24Z ming $ */
 /*
 * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
 * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -53,6 +53,10 @@ pjmedia_format_get_audio_format_detail(const pjmedia_format *fmt,
 	if (fmt->detail_type==PJMEDIA_FORMAT_DETAIL_AUDIO) {
 		return (pjmedia_audio_format_detail*) &fmt->det.aud;
 	} else {
+        /* Get rid of unused var compiler warning if pj_assert()
+         * macro does not do anything
+         */
+        PJ_UNUSED_ARG(assert_valid);
 		pj_assert(!assert_valid || !"Invalid audio format detail");
 		return NULL;
 	}

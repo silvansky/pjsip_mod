@@ -1,4 +1,4 @@
-/* $Id: sip_config.h 4038 2012-04-11 10:01:00Z bennylp $ */
+/* $Id: sip_config.h 4094 2012-04-26 09:31:00Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -431,10 +431,14 @@ PJ_INLINE(pjsip_cfg_t*) pjsip_cfg(void)
  * side) with no usage before the transport is destroyed. Value is in
  * seconds.
  *
- * Default: 30
+ * Note that if the value is put lower than 33 seconds, it may cause some
+ * pjsip test units to fail. See the comment on the following link:
+ * https://trac.pjsip.org/repos/ticket/1465#comment:4
+ *
+ * Default: 33
  */
 #ifndef PJSIP_TRANSPORT_IDLE_TIME
-#   define PJSIP_TRANSPORT_IDLE_TIME	30
+#   define PJSIP_TRANSPORT_IDLE_TIME	33
 #endif
 
 

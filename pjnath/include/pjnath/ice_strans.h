@@ -1,4 +1,4 @@
-/* $Id: ice_strans.h 3553 2011-05-05 06:14:19Z nanang $ */
+/* $Id: ice_strans.h 4133 2012-05-21 14:00:17Z bennylp $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -268,6 +268,14 @@ typedef struct pj_ice_strans_cfg
 	 * The default value is PJ_STUN_PORT.
 	 */
 	pj_uint16_t	     port;
+
+	/**
+	 * Ignore STUN resolution error and proceed with just local
+	 * addresses.
+	 *
+	 * The default is PJ_FALSE
+	 */
+	pj_bool_t	     ignore_stun_error;
 
     } stun;
 

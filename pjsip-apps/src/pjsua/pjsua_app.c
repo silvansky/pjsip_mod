@@ -1,4 +1,4 @@
-/* $Id: pjsua_app.c 4027 2012-04-05 08:38:49Z nanang $ */
+/* $Id: pjsua_app.c 4129 2012-05-17 08:27:46Z nanang $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -3371,6 +3371,10 @@ static void on_call_media_event(pjsua_call_id call_id,
 	/* Re-arrange video windows */
 	arrange_window(PJSUA_INVALID_ID);
     }
+#else
+    PJ_UNUSED_ARG(call_id);
+    PJ_UNUSED_ARG(med_idx);
+    PJ_UNUSED_ARG(event);
 #endif
 }
 
@@ -5741,7 +5745,7 @@ pj_status_t app_init(int argc, char *argv[])
 
     /* Create AVI player virtual devices */
     if (app_config.avi_cnt) {
-#if PJMEDIA_VIDEO_DEV_HAS_AVI
+#if PJMEDIA_HAS_VIDEO && PJMEDIA_VIDEO_DEV_HAS_AVI
 	pjmedia_vid_dev_factory *avi_factory;
 
 	status = pjmedia_avi_dev_create_factory(pjsua_get_pool_factory(),
@@ -6100,8 +6104,10 @@ pj_status_t app_destroy(void)
     for (i=0; i<app_config.avi_cnt; ++i) {
 	if (app_config.avi[i].slot != PJSUA_INVALID_ID)
 	    pjsua_conf_remove_port(app_config.avi[i].slot);
+#if PJMEDIA_HAS_VIDEO && PJMEDIA_VIDEO_DEV_HAS_AVI
 	if (app_config.avi[i].dev_id != PJMEDIA_VID_INVALID_DEV)
 	    pjmedia_avi_dev_free(app_config.avi[i].dev_id);
+#endif
     }
 
     /* Close ringback port */
