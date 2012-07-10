@@ -459,6 +459,8 @@ static pj_status_t ca_factory_refresh(pjmedia_aud_dev_factory *f)
 	    }
 	} else {
         PJ_LOG(1, (THIS_FILE, "*** FAILED to get Default Input Device! status: %d, dev_id: %d, dev_ids[idx]: %d", ostatus, dev_id, dev_ids[idx]));
+        if (ostatus == noErr)
+                idx++;
     }
 
 	/* Find default audio output device */
